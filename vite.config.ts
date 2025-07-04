@@ -7,6 +7,7 @@ import zip from 'vite-plugin-zip-pack'
 
 import manifest from './manifest.config.js'
 import { name, version } from './package.json'
+import { replaceRootWithHost } from './src/plugins/replaceRootWithHost'
 
 export default defineConfig({
   resolve: {
@@ -17,6 +18,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    replaceRootWithHost(),
     crx({ manifest }),
     zip({ outDir: 'release', outFileName: `crx-${name}-${version}.zip` }),
   ],
