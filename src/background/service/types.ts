@@ -1,4 +1,3 @@
-// AI Provider API types
 export type AIMessage = {
   role: 'system' | 'user' | 'assistant'
   content: string

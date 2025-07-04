@@ -1,25 +1,13 @@
-// Background script - handles messages from content scripts and forwards to AI API
-
 import OpenAI from 'openai'
 
-import { getAIService } from './service'
+import { getAIService, resetAIService } from './service'
 import type { AIMessage } from './service/types'
 import type { BackgroundResponse, ContentMessage } from './types'
 
-// API configuration constants (will be provided by popup later)
-const _API_CONFIG = {
-  API_KEY: 'your-api-key-here', // TODO: Get from popup
-  BASE_URL: 'https://api.perplexity.ai', // TODO: Get from popup
-  DEFAULT_MODEL: 'llama-3.1-sonar-small-128k-online', // TODO: Get from popup
-}
-
-// Initialize AI service
 let aiService: ReturnType<typeof getAIService> | null = null
 
-// Listen for messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResponse) => {
   console.log('Background received message:', message)
-  // Handle the message and send response
   handleMessage(message)
     .then(sendResponse)
     .catch((error) => {
@@ -30,10 +18,9 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
       })
     })
 
-  return true // Keep message channel open for async response
+  return true
 })
 
-// Handle incoming messages
 async function handleMessage(message: ContentMessage): Promise<BackgroundResponse> {
   const { type, payload } = message
 
@@ -41,6 +28,9 @@ async function handleMessage(message: ContentMessage): Promise<BackgroundRespons
     switch (type) {
       case 'initialize_ai':
         return await handleInitializeAI(payload)
+
+      case 'reset_ai':
+        return await handleResetAI()
 
       case 'send_ai_message':
         return await handleSendAIMessage(payload)
@@ -62,7 +52,6 @@ async function handleMessage(message: ContentMessage): Promise<BackgroundRespons
   }
 }
 
-// Handle AI service initialization
 async function handleInitializeAI(payload: Record<string, unknown>): Promise<BackgroundResponse> {
   const apiKey = payload.apiKey as string
   const baseUrl = payload.baseUrl as string
@@ -76,14 +65,12 @@ async function handleInitializeAI(payload: Record<string, unknown>): Promise<Bac
   }
 
   try {
-    // Create OpenAI client and inject as dependency
     const client = new OpenAI({
       baseURL: baseUrl,
       apiKey,
       dangerouslyAllowBrowser: true,
     })
 
-    // Initialize service with dependency injection
     aiService = getAIService(client, defaultModel)
 
     return {
@@ -98,7 +85,24 @@ async function handleInitializeAI(payload: Record<string, unknown>): Promise<Bac
   }
 }
 
-// Handle non-streaming AI message
+async function handleResetAI(): Promise<BackgroundResponse> {
+  try {
+    // Reset the service
+    resetAIService()
+    aiService = null
+
+    return {
+      success: true,
+      data: { message: 'AI service reset successfully' },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to reset service',
+    }
+  }
+}
+
 async function handleSendAIMessage(payload: Record<string, unknown>): Promise<BackgroundResponse> {
   if (!aiService) {
     return {
@@ -132,7 +136,6 @@ async function handleSendAIMessage(payload: Record<string, unknown>): Promise<Ba
   }
 }
 
-// Handle streaming AI message
 async function handleSendAIMessageStream(
   payload: Record<string, unknown>,
 ): Promise<BackgroundResponse> {
@@ -154,7 +157,6 @@ async function handleSendAIMessageStream(
       }
     }
 
-    // Start streaming (this will send chunks via chrome.runtime.sendMessage)
     aiService.sendMessageStream(messages, options)
 
     return {

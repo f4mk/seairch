@@ -5,7 +5,12 @@ import { Textarea } from '@/components/ui/textarea'
 
 import { Props } from './types'
 
-export const SearchControl: Props = ({ searchQuery, setSearchQuery, handleSearch }) => {
+export const SearchControl: Props = ({
+  searchQuery,
+  setSearchQuery,
+  handleSearch,
+  isLoading = false,
+}) => {
   return (
     <div className='flex gap-2'>
       <Textarea
@@ -15,6 +20,7 @@ export const SearchControl: Props = ({ searchQuery, setSearchQuery, handleSearch
         onChange={(e) => setSearchQuery(e.target.value)}
         className='min-h-12 max-h-32 pr-10 resize-none break-all overflow-wrap-anywhere'
         rows={1}
+        disabled={isLoading}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
@@ -25,7 +31,7 @@ export const SearchControl: Props = ({ searchQuery, setSearchQuery, handleSearch
       <Button
         onClick={handleSearch}
         className='h-10 w-10 p-0 flex justify-center self-end'
-        disabled={!searchQuery.trim()}
+        disabled={!searchQuery.trim() || isLoading}
         variant='secondary'
         tabIndex={0}
         aria-label='Send search'

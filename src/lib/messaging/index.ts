@@ -1,6 +1,3 @@
-// Cross-window messaging utilities for Chrome extension
-// This library provides a unified API for communication between background, popup, and content scripts
-
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
@@ -97,9 +94,7 @@ export async function sendToAllTabs(
 
   const promises = tabs.map((tab) => {
     if (tab.id) {
-      return sendToTab(tab.id, type, payload).catch(() => {
-        // Ignore errors for tabs that don't have content scripts
-      })
+      return sendToTab(tab.id, type, payload).catch(() => {})
     }
     return Promise.resolve()
   })
@@ -123,14 +118,9 @@ export async function sendToPopup(
       payload,
     })
   } catch (error) {
-    // Popup might not be open, that's okay
     console.debug('Popup not open or message not handled:', error)
   }
 }
-
-// ============================================================================
-// MESSAGE LISTENING FUNCTIONS
-// ============================================================================
 
 /**
  * Set up a message listener for request-response pattern
@@ -161,7 +151,6 @@ export function onMessage(type: MessageType, handler: MessageHandler): () => voi
 
   chrome.runtime.onMessage.addListener(listener)
 
-  // Return cleanup function
   return () => {
     chrome.runtime.onMessage.removeListener(listener)
   }
@@ -181,7 +170,6 @@ export function onStreamMessage(type: MessageType, handler: StreamHandler): () =
 
   chrome.runtime.onMessage.addListener(listener)
 
-  // Return cleanup function
   return () => {
     chrome.runtime.onMessage.removeListener(listener)
   }
@@ -200,15 +188,10 @@ export function onAllMessages(
 
   chrome.runtime.onMessage.addListener(listener)
 
-  // Return cleanup function
   return () => {
     chrome.runtime.onMessage.removeListener(listener)
   }
 }
-
-// ============================================================================
-// AI-SPECIFIC MESSAGING HELPERS
-// ============================================================================
 
 /**
  * Initialize the AI service

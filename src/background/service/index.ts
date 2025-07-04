@@ -1,6 +1,3 @@
-// Types for background script communication (imported for future use)
-// import { BackgroundResponse, ContentMessage } from '../types'
-
 import type OpenAI from 'openai'
 
 import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
@@ -44,7 +41,6 @@ export class AIService {
         }
       }
 
-      // Send completion signal
       this.sendChunkToWindow({
         type: 'done',
       })
@@ -82,14 +78,11 @@ export class AIService {
    * Send streaming chunk to extension window
    */
   private async sendChunkToWindow(chunk: StreamChunk): Promise<void> {
-    // Send to popup if it exists
     await sendToPopup(MSG_AI_STREAM_CHUNK, chunk)
-    // Send to all active tabs (content scripts)
     await sendToAllTabs(MSG_AI_STREAM_CHUNK, chunk)
   }
 }
 
-// Export a singleton instance
 let aiServiceInstance: AIService | null = null
 
 export function getAIService(client: OpenAI, defaultModel: string): AIService
@@ -102,4 +95,8 @@ export function getAIService(client?: OpenAI, defaultModel?: string): AIService 
     aiServiceInstance = new AIService(client, defaultModel)
   }
   return aiServiceInstance
+}
+
+export function resetAIService(): void {
+  aiServiceInstance = null
 }

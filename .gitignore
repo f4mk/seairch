@@ -12,6 +12,14 @@ dist
 release
 dist-ssr
 *.local
+.cursorrules
+.cursor
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*

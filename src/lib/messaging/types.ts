@@ -1,5 +1,3 @@
-// Cross-window messaging types for Chrome extension
-
 import { MESSAGE_TYPES, MSG_AI_STREAM_CHUNK } from '@/consts/messages'
 
 export type MessageType = (typeof MESSAGE_TYPES)[number]

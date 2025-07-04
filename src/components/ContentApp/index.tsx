@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { ID_HOST } from '@/consts/styles'
 
 import { Search } from '../Search'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 0,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 export const ContentApp = () => {
   const [show, setShow] = useState(false)
@@ -36,5 +46,9 @@ export const ContentApp = () => {
     }
   }, [show])
 
-  return <>{show && <Search onClose={() => setShow(false)} initialQuery={selectedText} />}</>
+  return (
+    <QueryClientProvider client={queryClient}>
+      {show && <Search onClose={() => setShow(false)} initialQuery={selectedText} />}
+    </QueryClientProvider>
+  )
 }
