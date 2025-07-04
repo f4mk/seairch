@@ -1,8 +1,8 @@
-import * as React from 'react'
+import { ComponentProps } from 'react'
 
 import { cn } from '@/lib/utils'
 
-export const Card = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const Card = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div
       data-slot='card'
@@ -15,7 +15,7 @@ export const Card = ({ className, ...props }: React.ComponentProps<'div'>) => {
   )
 }
 
-export const CardHeader = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const CardHeader = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div
       data-slot='card-header'
@@ -28,7 +28,7 @@ export const CardHeader = ({ className, ...props }: React.ComponentProps<'div'>)
   )
 }
 
-export const CardTitle = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const CardTitle = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div
       data-slot='card-title'
@@ -38,7 +38,7 @@ export const CardTitle = ({ className, ...props }: React.ComponentProps<'div'>) 
   )
 }
 
-export const CardDescription = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const CardDescription = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div
       data-slot='card-description'
@@ -48,7 +48,7 @@ export const CardDescription = ({ className, ...props }: React.ComponentProps<'d
   )
 }
 
-export const CardAction = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const CardAction = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div
       data-slot='card-action'
@@ -58,11 +58,11 @@ export const CardAction = ({ className, ...props }: React.ComponentProps<'div'>)
   )
 }
 
-export const CardContent = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const CardContent = ({ className, ...props }: ComponentProps<'div'>) => {
   return <div data-slot='card-content' className={cn('px-6', className)} {...props} />
 }
 
-export const CardFooter = ({ className, ...props }: React.ComponentProps<'div'>) => {
+export const CardFooter = ({ className, ...props }: ComponentProps<'div'>) => {
   return (
     <div
       data-slot='card-footer'

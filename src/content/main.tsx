@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
-import { App } from '@/components/App'
+import { ContentApp } from '@/components/ContentApp'
 import { ID_HOST, Z_INDEX_MODAL } from '@/consts/styles'
 import { applyDarkClass } from '@/lib/utils'
 
@@ -29,6 +29,6 @@ document.body.appendChild(host)
 
 createRoot(mount).render(
   <StrictMode>
-    <App />
+    <ContentApp />
   </StrictMode>,
 )

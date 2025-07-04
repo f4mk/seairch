@@ -3,14 +3,15 @@ import { useRef, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Z_INDEX_MODAL } from '@/consts/styles'
 import { useDraggable } from '@/hooks/useDraggable'
+import { cn } from '@/lib/utils'
 
 import { SearchControl } from './components/SearchControl'
 import { SearchHeader } from './components/SearchHeader'
 import { TextContent } from './components/TextContent'
 import { Props } from './types'
 
-export const Search: Props = ({ onClose }) => {
-  const [searchQuery, setSearchQuery] = useState('')
+export const Search: Props = ({ onClose, initialQuery = '' }) => {
+  const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [textContent, setTextContent] = useState('')
   const modalRef = useRef<HTMLDivElement>(null)
   const { position, isDragging, handleMouseDown } = useDraggable(modalRef)
@@ -31,10 +32,17 @@ export const Search: Props = ({ onClose }) => {
         userSelect: isDragging ? 'none' : 'auto',
       }}
     >
-      <Card className='pt-0 h-full flex flex-col resize overflow-auto min-h-48 min-w-96 max-w-screen max-h-screen'>
-        <SearchHeader onClose={onClose} handleMouseDown={handleMouseDown} />
-
-        <div className='flex-1 p-6 flex flex-col gap-4 min-h-0'>
+      <Card
+        className={cn(
+          'pt-0 h-full flex flex-col resize overflow-auto min-w-96 max-w-screen max-h-screen',
+          textContent ? 'min-h-96' : 'min-h-48',
+        )}
+        style={{ width: modalRef.current?.clientWidth, height: modalRef.current?.clientHeight }}
+      >
+        <div onMouseDown={handleMouseDown} className='cursor-move relative z-10'>
+          <SearchHeader onClose={onClose} />
+        </div>
+        <div className='flex-1 p-6 flex h-full justify-between flex-col gap-4 overflow-hidden'>
           {textContent && <TextContent text={textContent} />}
           <SearchControl
             searchQuery={searchQuery}

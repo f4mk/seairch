@@ -5,9 +5,9 @@ import { CardAction, CardHeader, CardTitle } from '@/components/ui/card'
 
 import { Props } from './types'
 
-export const SearchHeader: Props = ({ onClose, handleMouseDown }) => {
+export const SearchHeader: Props = ({ onClose }) => {
   return (
-    <CardHeader className='pb-0 items-center pt-4' onMouseDown={handleMouseDown}>
+    <CardHeader className='pb-0 items-center pt-4'>
       <CardTitle className='select-none text-lg'>Search</CardTitle>
       <CardAction>
         <Button variant='ghost' size='sm' aria-label='Close search' onClick={onClose}>

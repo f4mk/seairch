@@ -4,8 +4,9 @@ import { ID_HOST } from '@/consts/styles'
 
 import { Search } from '../Search'
 
-export const App = () => {
+export const ContentApp = () => {
   const [show, setShow] = useState(false)
+  const [selectedText, setSelectedText] = useState<string | undefined>(undefined)
   const hostRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -16,6 +17,7 @@ export const App = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'i') {
         event.preventDefault()
+        setSelectedText(window.getSelection()?.toString().trim())
         setShow((prev) => !prev)
       }
 
@@ -34,5 +36,5 @@ export const App = () => {
     }
   }, [show])
 
-  return <>{show && <Search onClose={() => setShow(false)} />}</>
+  return <>{show && <Search onClose={() => setShow(false)} initialQuery={selectedText} />}</>
 }

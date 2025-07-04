@@ -7,13 +7,13 @@ import { Props } from './types'
 
 export const SearchControl: Props = ({ searchQuery, setSearchQuery, handleSearch }) => {
   return (
-    <div className='flex gap-2 mt-auto'>
+    <div className='flex gap-2'>
       <Textarea
         autoFocus
         placeholder='Enter your search query...'
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className='min-h-12 max-h-32 flex-1 pr-10 resize-none'
+        className='min-h-12 max-h-32 pr-10 resize-none break-all overflow-wrap-anywhere'
         rows={1}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
