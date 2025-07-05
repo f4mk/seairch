@@ -11,7 +11,7 @@ export const useDraggable = (ref: React.RefObject<HTMLElement | null>, throttleT
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const initialRectRef = useRef<DOMRect | null>(null)
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const onMouseDown = (e: React.MouseEvent) => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect()
       initialRectRef.current = rect
@@ -70,6 +70,6 @@ export const useDraggable = (ref: React.RefObject<HTMLElement | null>, throttleT
   return {
     position,
     isDragging,
-    handleMouseDown,
+    onMouseDown,
   }
 }

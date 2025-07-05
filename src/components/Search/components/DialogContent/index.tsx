@@ -1,42 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 
 import { Spinner } from '@/components/Spinner'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 
 import { components } from '../TextContent/consts'
 import { Props } from './types'
 
 export const DialogContent: Props = ({ messages, isLoading }) => {
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const [userScrolledUp, setUserScrolledUp] = useState(false)
-
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current
-    if (!scrollArea) return
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollArea
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10 // 10px threshold
-      setUserScrolledUp(!isAtBottom)
-    }
-
-    scrollArea.addEventListener('scroll', handleScroll)
-    return () => scrollArea.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
-    if (!userScrolledUp && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [messages, isLoading, userScrolledUp])
+  const { scrollViewportRef, bottomRef } = useAutoScroll(messages)
 
   return (
     <div className='w-full overflow-auto flex-1'>
-      <ScrollArea className='h-full w-full' ref={scrollAreaRef}>
+      <ScrollArea className='h-full w-full' ref={scrollViewportRef}>
         <div className='flex flex-col gap-4 p-4'>
           {messages.map((message, index) => (
             <div

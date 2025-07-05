@@ -1,13 +1,12 @@
-import { ComponentProps } from 'react'
+import { ComponentProps, forwardRef } from 'react'
 import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
 
 import { cn } from '@/lib/utils'
 
-export const ScrollArea = ({
-  className,
-  children,
-  ...props
-}: ComponentProps<typeof ScrollAreaPrimitive.Root>) => {
+export const ScrollArea = forwardRef<
+  HTMLDivElement,
+  ComponentProps<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => {
   return (
     <ScrollAreaPrimitive.Root
       data-slot='scroll-area'
@@ -15,6 +14,7 @@ export const ScrollArea = ({
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
+        ref={ref}
         data-slot='scroll-area-viewport'
         className='focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1'
       >
@@ -24,7 +24,7 @@ export const ScrollArea = ({
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   )
-}
+})
 
 export const ScrollBar = ({
   className,

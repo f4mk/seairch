@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { keepPreviousData } from '@tanstack/react-query'
+import { TrashIcon } from 'lucide-react'
 
+import { Combobox } from '@/components/Combobox'
 import { Spinner } from '@/components/Spinner'
 import { cn } from '@/lib/utils'
 
@@ -8,6 +10,18 @@ import { DialogContent } from '../DialogContent'
 import { SearchControl } from '../SearchControl'
 import { useSearchQuery } from './queries'
 import { Props } from './types'
+
+type Option = {
+  id: string
+  label: string
+  iconButton?: React.ReactElement
+}
+
+const chats: Option[] = [
+  { id: '1', label: 'Chat One', iconButton: <TrashIcon className='w-4 h-4' /> },
+  { id: '2', label: 'Chat Two' },
+  { id: '3', label: 'Chat Three', iconButton: <TrashIcon className='w-4 h-4' /> },
+]
 
 export const SearchContent: Props = ({ initialQuery }) => {
   const [searchQuery, setSearchQuery] = useState(initialQuery)
@@ -35,6 +49,12 @@ export const SearchContent: Props = ({ initialQuery }) => {
     ? [{ role: 'assistant' as const, content: `Error: ${error.message}` }]
     : data?.messages || []
 
+  // TODO: add later
+  const [selectedChat, setSelectedChat] = useState<Option | null>(null)
+  function handleDelete(option: Option) {
+    alert(`Delete chat ${option.label}`)
+  }
+
   return (
     <div
       className={cn(
@@ -60,6 +80,15 @@ export const SearchContent: Props = ({ initialQuery }) => {
         handleSearch={handleSearch}
         isLoading={isFetching}
       />
+      <div>
+        <Combobox
+          options={chats}
+          value={selectedChat}
+          onChange={setSelectedChat}
+          onButtonClick={handleDelete}
+          onChangeState={() => {}}
+        />
+      </div>
     </div>
   )
 }

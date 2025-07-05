@@ -118,3 +118,20 @@
     @apply bg-background text-foreground;
   }
 }
+@layer components {
+  .popover-content {
+    @apply z-50 w-full rounded-md border shadow-md outline-none p-0
+      bg-popover text-popover-foreground;
+    @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
+    @apply data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0;
+    @apply data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95;
+    @apply data-[side=bottom]:slide-in-from-top-2;
+  }
+  
+  .search-modal {
+    @apply z-50 rounded-md border shadow-md outline-none
+      bg-popover text-popover-foreground;
+    @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
+    @apply data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0;
+  }
+}
