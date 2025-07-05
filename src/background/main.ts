@@ -1,4 +1,5 @@
 import {
+  MSG_DELETE_DIALOG,
   MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
@@ -6,6 +7,7 @@ import {
   MSG_UPDATE_AI,
 } from '@/consts/messages'
 import type { AIMessage } from '@/lib/messaging/types'
+import { generateDialogId } from '@/lib/utils'
 
 import { HistoryClient } from './clients/historyClient'
 import { createOpenAIClient } from './clients/openaiClient'
@@ -15,10 +17,10 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from './consts'
-import { getMessageService, resetMessageService } from './service'
+import { getMessageService, MessageService, resetMessageService } from './service'
 import type { BackgroundResponse, ContentMessage, InitConfig } from './types'
 
-let messageService: ReturnType<typeof getMessageService> | null = null
+let messageService: MessageService | null = null
 let historyClient: HistoryClient | null = null
 
 chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResponse) => {
@@ -54,6 +56,9 @@ async function handleMessage(message: ContentMessage): Promise<BackgroundRespons
 
       case MSG_GET_DIALOGS:
         return handleGetDialogs()
+
+      case MSG_DELETE_DIALOG:
+        return handleDeleteDialog(payload)
 
       default:
         return {
@@ -156,7 +161,7 @@ async function handleResetAI(): Promise<BackgroundResponse> {
 }
 
 async function handleSendAIMessage(payload: {
-  messages: AIMessage[]
+  message?: AIMessage
   dialogId: string
 }): Promise<BackgroundResponse> {
   if (!messageService) {
@@ -167,28 +172,30 @@ async function handleSendAIMessage(payload: {
   }
 
   try {
-    if (!payload.messages || !Array.isArray(payload.messages)) {
-      return {
-        success: false,
-        error: 'Messages array is required',
-      }
-    }
-
     if (!payload.dialogId) {
+      payload.dialogId = generateDialogId()
+    }
+
+    if (!payload.message) {
+      const history = messageService.getHistory(payload.dialogId)
+      if (!history) {
+        return {
+          success: false,
+          error: 'History not found',
+        }
+      }
+
       return {
-        success: false,
-        error: 'Dialog ID is required',
+        success: true,
+        data: history,
       }
     }
 
-    const result = await messageService.sendMessage(payload.messages, payload.dialogId)
+    const result = await messageService.sendMessage(payload.message, payload.dialogId)
 
     return {
       success: true,
-      data: {
-        messages: result.messages,
-        dialogId: result.dialogId,
-      },
+      data: result,
     }
   } catch (error) {
     return {
@@ -199,15 +206,15 @@ async function handleSendAIMessage(payload: {
 }
 
 async function handleGetDialogs(): Promise<BackgroundResponse> {
-  if (!historyClient) {
+  if (!messageService) {
     return {
       success: false,
-      error: 'History client not initialized. Please initialize the service first.',
+      error: 'Message service not initialized. Please initialize the service first.',
     }
   }
 
   try {
-    const dialogs = historyClient.getDialogs()
+    const dialogs = messageService.getDialogs()
     return {
       success: true,
       data: {
@@ -218,6 +225,27 @@ async function handleGetDialogs(): Promise<BackgroundResponse> {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get dialogs',
+    }
+  }
+}
+async function handleDeleteDialog(payload: { dialogId: string }): Promise<BackgroundResponse> {
+  if (!messageService) {
+    return {
+      success: false,
+      error: 'Message service not initialized. Please initialize the service first.',
+    }
+  }
+
+  try {
+    messageService.deleteDialog(payload.dialogId)
+    return {
+      success: true,
+      data: { message: 'Dialog deleted successfully' },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete dialog',
     }
   }
 }

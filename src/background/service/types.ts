@@ -1,6 +1,6 @@
 import type OpenAI from 'openai'
 
-import { AIMessage } from '@/lib/messaging/types'
+import { AIMessage, DialogItem } from '@/lib/messaging/types'
 
 import { HistoryClient } from '../clients/historyClient'
 
@@ -15,5 +15,5 @@ export type MessageServiceConfig = {
 
 export type DialogResponse = {
   messages: AIMessage[]
-  dialogId: string
+  dialog: DialogItem
 }

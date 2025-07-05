@@ -1,4 +1,5 @@
 import {
+  MSG_DELETE_DIALOG,
   MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
@@ -27,13 +28,19 @@ export type ContentMessage =
   | {
       type: typeof MSG_SEND_AI_MESSAGE
       payload: {
-        messages: AIMessage[]
+        message?: AIMessage
         dialogId: string
       }
     }
   | {
       type: typeof MSG_GET_DIALOGS
       payload: undefined
+    }
+  | {
+      type: typeof MSG_DELETE_DIALOG
+      payload: {
+        dialogId: string
+      }
     }
 
 export type BackgroundResponse = {

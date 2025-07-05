@@ -27,7 +27,7 @@ export const Option: Props = ({ option, isSelected, onSelect, onButtonClick }) =
               e.stopPropagation()
               onButtonClick?.(option)
             }}
-            className='h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive'
+            className='h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive cursor-pointer'
             aria-label={`Delete ${option.label}`}
           >
             {option.iconButton}

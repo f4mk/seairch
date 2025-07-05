@@ -1,14 +1,16 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { keepPreviousData } from '@tanstack/react-query'
+import { TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
+import { OptionType } from '@/components/Combobox/types'
 import { Spinner } from '@/components/Spinner'
-import { DialogItem } from '@/lib/messaging/types'
+import { AIMessage, DialogItem } from '@/lib/messaging/types'
 import { cn } from '@/lib/utils'
 
 import { DialogContent } from '../DialogContent'
 import { SearchControl } from '../SearchControl'
-import { useDialogsQuery, useSearchQuery } from './queries'
+import { useDeleteDialogQuery, useDialogsQuery, useSearchQuery } from './queries'
 import { Props } from './types'
 import { getDefaultDialog } from './utils'
 
@@ -16,11 +18,13 @@ export const SearchContent: Props = ({ initialQuery }) => {
   const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [dialog, setDialog] = useState<DialogItem>(getDefaultDialog())
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
   const { isFetching, isLoading, data, error, refetch } = useSearchQuery(searchQuery, dialog.id, {
     placeholderData: keepPreviousData,
   })
 
   const { data: dialogs, isFetching: isDialogsLoading, refetch: refetchDialogs } = useDialogsQuery()
+  const { mutate: deleteDialog, isPending: isDeletingDialog } = useDeleteDialogQuery()
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return
@@ -29,22 +33,45 @@ export const SearchContent: Props = ({ initialQuery }) => {
         textareaRef.current?.focus()
       }, 0)
       if (result.isError) return
-
+      setDialog(result.data?.dialog || getDefaultDialog())
       setSearchQuery('')
       refetchDialogs()
     })
   }
 
-  const messages = error
-    ? [{ role: 'assistant' as const, content: `Error: ${error.message}` }]
-    : data?.messages || []
+  useEffect(() => {
+    if (dialog.id) {
+      refetch()
+    }
+  }, [dialog.id, refetch])
 
-  function handleDelete(option: DialogItem) {
-    alert(`Delete chat ${option.label}`)
+  let messages: AIMessage[]
+  if (error) {
+    messages = [{ role: 'assistant' as const, content: `Error: ${error.message}` }]
+  } else if (dialog.id) {
+    messages = data?.messages || []
+  } else {
+    messages = []
   }
 
-  const dialogOptions = useMemo(() => [dialog, ...(dialogs || [])], [dialog, dialogs])
+  const handleDelete = useCallback(
+    (option: OptionType) => {
+      deleteDialog(option.id, {
+        onSuccess: () => {
+          refetchDialogs()
+        },
+      })
+    },
+    [deleteDialog, refetchDialogs],
+  )
 
+  const dialogOptions: OptionType[] = useMemo(
+    () =>
+      [getDefaultDialog(), ...(dialogs || [])].map((d) =>
+        d.id ? { ...d, iconButton: <TrashIcon className='w-4 h-4' /> } : d,
+      ),
+    [dialogs],
+  )
   return (
     <div
       className={cn(
@@ -57,7 +84,7 @@ export const SearchContent: Props = ({ initialQuery }) => {
           <Spinner />
         </div>
       ) : messages.length > 0 ? (
-        <DialogContent messages={messages} isLoading={isFetching} />
+        <DialogContent messages={messages} isLoading={isFetching} currentDialogId={dialog.id} />
       ) : (
         <div className='flex-1 flex items-center justify-center'>
           <p className='text-sm text-muted-foreground'>How can I help you?</p>
@@ -70,12 +97,12 @@ export const SearchContent: Props = ({ initialQuery }) => {
         handleSearch={handleSearch}
         isLoading={isFetching}
       />
-      <div className='w-[40%]'>
+      <div className='w-[50%]'>
         <Combobox
           options={dialogOptions}
           onChange={(option) => setDialog(option)}
           onButtonClick={handleDelete}
-          disabled={isDialogsLoading}
+          disabled={isDialogsLoading || isDeletingDialog}
           selectedKey={dialog.id}
         />
       </div>

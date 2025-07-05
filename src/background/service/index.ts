@@ -1,6 +1,6 @@
 import type OpenAI from 'openai'
 
-import { AIMessage } from '@/lib/messaging/types'
+import { AIMessage, DialogItem } from '@/lib/messaging/types'
 
 import { HistoryClient } from '../clients/historyClient'
 import { HistoryItem } from '../clients/historyClient/types'
@@ -30,37 +30,59 @@ export class MessageService {
     this.temperature = temperature
   }
 
-  private addMessages(dialogId: string, messages: AIMessage[]): HistoryItem {
+  getHistory(dialogId: string): HistoryItem | undefined
+  getHistory(dialogId: string, defaultHistory: HistoryItem): HistoryItem
+  getHistory(dialogId: string, defaultHistory?: HistoryItem): HistoryItem | undefined {
     const history = this.historyClient.getHistory(dialogId)
-    if (!history.messages.length) {
-      return this.historyClient.addMessages(dialogId, [
-        { role: 'system', content: this.systemPrompt },
-        ...messages,
-      ])
+
+    return history || defaultHistory
+  }
+
+  private addMessage(dialogId: string, message: AIMessage): void {
+    const content = message.content
+    const label = content.length < 20 ? content : `${content.slice(0, 20)}...`
+    const defaultHistory = {
+      dialog: {
+        id: dialogId,
+        label,
+      },
+      messages: [{ role: 'system', content: this.systemPrompt } as AIMessage],
     }
-    const updatedHistory = this.historyClient.addMessages(dialogId, messages)
-    updatedHistory.messages.slice(1)
-    return updatedHistory
+    const history = this.getHistory(dialogId, defaultHistory)
+
+    history.messages.push(message)
+    this.historyClient.updateHistory(history)
   }
 
   /**
    * Send a message to AI API and get a complete response (non-streaming)
    */
-  async sendMessage(messages: AIMessage[], dialogId: string): Promise<DialogResponse> {
-    const updatedHistory = this.addMessages(dialogId, messages)
+  async sendMessage(message: AIMessage, dialogId: string): Promise<DialogResponse> {
+    this.addMessage(dialogId, message)
+    // NOTE: after adding a message, history must always be available
+    const history = this.getHistory(dialogId)
+    if (!history) {
+      throw new Error(`History not found for dialog ${dialogId}`)
+    }
     const response = await this.openaiClient.chat.completions.create({
       model: this.defaultModel,
-      messages: updatedHistory.messages,
+      messages: history.messages,
       stream: false,
       max_tokens: this.maxTokens,
       temperature: this.temperature,
     })
     const content = response.choices[0]?.message?.content || ''
 
-    const result = this.addMessages(dialogId, [{ role: 'assistant', content }])
+    this.addMessage(dialogId, { role: 'assistant', content })
+    const updatedHistory = this.getHistory(dialogId)
+    // NOTE: after adding a message, history must always be available
+    if (!updatedHistory) {
+      throw new Error(`History not found for dialog ${dialogId}`)
+    }
+
     return {
-      messages: result.messages,
-      dialogId: result.dialog.id,
+      messages: updatedHistory.messages.slice(1), // Exclude system message
+      dialog: updatedHistory.dialog,
     }
   }
 
@@ -80,6 +102,20 @@ export class MessageService {
    */
   clearHistory(): void {
     this.historyClient.clearAllHistory()
+  }
+
+  /**
+   * Get all dialogs
+   */
+  getDialogs(): DialogItem[] {
+    return this.historyClient.getDialogs()
+  }
+
+  /**
+   * Delete a dialog
+   */
+  deleteDialog(dialogId: string): void {
+    this.historyClient.clearHistory(dialogId)
   }
 }
 

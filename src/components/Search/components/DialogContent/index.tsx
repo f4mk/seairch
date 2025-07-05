@@ -9,8 +9,8 @@ import { useAutoScroll } from '@/hooks/useAutoScroll'
 import { components } from '../TextContent/consts'
 import { Props } from './types'
 
-export const DialogContent: Props = ({ messages, isLoading }) => {
-  const { scrollViewportRef, bottomRef } = useAutoScroll(messages)
+export const DialogContent: Props = ({ messages, isLoading, currentDialogId }) => {
+  const { scrollViewportRef, bottomRef } = useAutoScroll(currentDialogId)
 
   return (
     <div className='w-full overflow-auto flex-1'>

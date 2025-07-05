@@ -10,6 +10,7 @@ import {
 import type {
   AIMessage,
   BaseMessage,
+  DialogItem,
   MessageHandler,
   MessageType,
   RequestMessage,
@@ -211,15 +212,11 @@ export async function initializeAI(
 /**
  * Send a message to AI and get a complete response
  */
-export async function sendAIMessage(
-  messages: AIMessage[],
-  options: Record<string, unknown> = {},
-): Promise<{ messages: AIMessage[]; dialogId: string }> {
-  const { dialogId } = options
-  return sendToBackground(MSG_SEND_AI_MESSAGE, {
-    messages,
-    dialogId,
-  })
+export async function sendAIMessage(params: {
+  message?: AIMessage
+  dialogId: string
+}): Promise<{ messages: AIMessage[]; dialog: DialogItem }> {
+  return sendToBackground(MSG_SEND_AI_MESSAGE, params)
 }
 
 /**

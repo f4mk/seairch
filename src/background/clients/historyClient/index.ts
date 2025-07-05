@@ -1,4 +1,4 @@
-import type { AIMessage, DialogItem } from '@/lib/messaging/types'
+import type { DialogItem } from '@/lib/messaging/types'
 
 import { HistoryItem } from './types'
 
@@ -21,24 +21,25 @@ export class HistoryClient {
    * Get all dialogs
    */
   getDialogs(): DialogItem[] {
-    return Array.from(conversationHistory.keys()).map((dialogId) => ({
-      id: dialogId,
-      label: dialogId,
+    return Array.from(conversationHistory.values()).map((history) => ({
+      ...history.dialog,
     }))
   }
 
   /**
    * Add messages to conversation history
    */
-  addMessages(dialogId: string, messages: AIMessage[]): HistoryItem {
-    let historyItem = conversationHistory.get(dialogId)
-    if (!historyItem) {
-      historyItem = { messages: [], dialog: { id: dialogId, label: dialogId } }
-      conversationHistory.set(dialogId, historyItem)
-    }
-    historyItem.messages.push(...messages)
-    this.limitHistory(dialogId, this.maxHistoryMessages)
-    return historyItem
+  updateHistory(history: HistoryItem): void {
+    conversationHistory.set(history.dialog.id, history)
+    this.limitHistory(history.dialog.id, this.maxHistoryMessages)
+  }
+
+  /**
+   * Get conversation history
+   */
+
+  getHistory(dialogId: string): HistoryItem | undefined {
+    return conversationHistory.get(dialogId)
   }
 
   /**
@@ -47,22 +48,8 @@ export class HistoryClient {
   private limitHistory(dialogId: string, maxMessages: number): void {
     const history = conversationHistory.get(dialogId)
     if (history && history.messages.length > maxMessages) {
-      const systemPrompt = history.messages[0]
-      const recentMessages = history.messages.slice(-(maxMessages - 1))
-      history.messages.splice(0, history.messages.length, systemPrompt, ...recentMessages)
+      history.messages.splice(1, history.messages.length - maxMessages)
     }
-  }
-
-  /**
-   * Get conversation history
-   */
-  getHistory(dialogId: string): HistoryItem {
-    return (
-      conversationHistory.get(dialogId) || {
-        messages: [],
-        dialog: { id: dialogId, label: dialogId },
-      }
-    )
   }
 
   /**
@@ -70,21 +57,12 @@ export class HistoryClient {
    */
   clearHistory(dialogId: string): void {
     conversationHistory.delete(dialogId)
-    const timeout = conversationTimeouts.get(dialogId)
-    if (timeout) {
-      clearTimeout(timeout)
-      conversationTimeouts.delete(dialogId)
-    }
   }
 
   /**
    * Clear all conversation history and timeouts
    */
   clearAllHistory(): void {
-    for (const timeout of conversationTimeouts.values()) {
-      clearTimeout(timeout)
-    }
     conversationHistory.clear()
-    conversationTimeouts.clear()
   }
 }
