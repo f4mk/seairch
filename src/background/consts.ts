@@ -3,5 +3,4 @@ export const DEFAULT_MAX_TOKENS = 512
 export const DEFAULT_SYSTEM_PROMPT =
   'You are an AI assistant that works in a browser extension. You are able to answer questions and help with tasks.'
 
-export const HALF_HOUR_TIMEOUT_MS = 30 * 60 * 1000
 export const DEFAULT_MAX_HISTORY_MESSAGES = 50

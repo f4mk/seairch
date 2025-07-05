@@ -27,3 +27,6 @@ export const throttle = <T extends (...args: any[]) => void>(cb: T, delay: numbe
     }
   }) as T
 }
+export const generateDialogId = (): string => {
+  return `dialog_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+}

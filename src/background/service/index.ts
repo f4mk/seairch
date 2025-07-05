@@ -2,7 +2,8 @@ import type OpenAI from 'openai'
 
 import { AIMessage } from '@/lib/messaging/types'
 
-import type { HistoryClient } from '../clients/historyClient'
+import { HistoryClient } from '../clients/historyClient'
+import { HistoryItem } from '../clients/historyClient/types'
 import type { DialogResponse, MessageServiceConfig } from './types'
 
 export class MessageService {
@@ -29,41 +30,37 @@ export class MessageService {
     this.temperature = temperature
   }
 
-  private generateDialogId(): string {
-    return `dialog_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
-  }
-
-  private addMessages(dialogId: string, messages: AIMessage[]): AIMessage[] {
+  private addMessages(dialogId: string, messages: AIMessage[]): HistoryItem {
     const history = this.historyClient.getHistory(dialogId)
-    if (!history.length) {
+    if (!history.messages.length) {
       return this.historyClient.addMessages(dialogId, [
         { role: 'system', content: this.systemPrompt },
         ...messages,
       ])
     }
-    return this.historyClient.addMessages(dialogId, messages).slice(1)
+    const updatedHistory = this.historyClient.addMessages(dialogId, messages)
+    updatedHistory.messages.slice(1)
+    return updatedHistory
   }
 
   /**
    * Send a message to AI API and get a complete response (non-streaming)
    */
-  async sendMessage(messages: AIMessage[], dialogId?: string): Promise<DialogResponse> {
-    const finalDialogId = dialogId || this.generateDialogId()
-
-    const updatedHistory = this.addMessages(finalDialogId, messages)
+  async sendMessage(messages: AIMessage[], dialogId: string): Promise<DialogResponse> {
+    const updatedHistory = this.addMessages(dialogId, messages)
     const response = await this.openaiClient.chat.completions.create({
       model: this.defaultModel,
-      messages: updatedHistory,
+      messages: updatedHistory.messages,
       stream: false,
       max_tokens: this.maxTokens,
       temperature: this.temperature,
     })
     const content = response.choices[0]?.message?.content || ''
 
-    const result = this.addMessages(finalDialogId, [{ role: 'assistant', content }])
+    const result = this.addMessages(dialogId, [{ role: 'assistant', content }])
     return {
-      messages: result,
-      dialogId: finalDialogId,
+      messages: result.messages,
+      dialogId: result.dialog.id,
     }
   }
 

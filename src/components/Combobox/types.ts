@@ -8,7 +8,6 @@ export type OptionType = {
 
 export type Props = FC<{
   options: OptionType[]
-  value: OptionType | null
   onChange: (option: OptionType) => void
   onButtonClick?: (option: OptionType) => void
   placeholder?: string
@@ -16,4 +15,5 @@ export type Props = FC<{
   emptyPlaceholder?: string
   disabled?: boolean
   onChangeState?: (isOpened: boolean) => void
+  selectedKey?: string
 }>

@@ -1,6 +1,8 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 
-import { sendAIMessage } from '@/lib/messaging'
+import { MSG_GET_DIALOGS } from '@/consts/messages'
+import { sendAIMessage, sendToBackground } from '@/lib/messaging'
+import { DialogItem } from '@/lib/messaging/types'
 
 import { SearchResult } from './types'
 
@@ -37,8 +39,25 @@ export const useSearchQuery = (
     queryKey: ['search', query, dialogId],
     queryFn: () => performSearch(query, dialogId),
     enabled: false,
-    staleTime: 0,
-    gcTime: 0,
+    ...options,
+  })
+}
+
+export const fetchDialogs = async (): Promise<DialogItem[]> => {
+  const response = await sendToBackground<{ dialogs: DialogItem[] }>(MSG_GET_DIALOGS)
+  const dialogs = new Set(response.dialogs)
+  console.log('dialogs', Array.from(dialogs))
+  return Array.from(dialogs).map((dialog) => ({
+    id: dialog.id,
+    // TODO: get dialog label from background
+    label: dialog.id,
+  }))
+}
+
+export const useDialogsQuery = (options?: Partial<UseQueryOptions<DialogItem[], Error>>) => {
+  return useQuery({
+    queryKey: ['dialogs'],
+    queryFn: fetchDialogs,
     ...options,
   })
 }

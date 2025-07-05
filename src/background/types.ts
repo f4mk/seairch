@@ -1,4 +1,5 @@
 import {
+  MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
   MSG_SEND_AI_MESSAGE,
@@ -16,7 +17,7 @@ export type AIMessageType =
 
 export type ContentMessage =
   | {
-      type: Exclude<AIMessageType, typeof MSG_INITIALIZE_AI>
+      type: Exclude<AIMessageType, typeof MSG_INITIALIZE_AI | typeof MSG_SEND_AI_MESSAGE>
       payload: Record<string, unknown>
     }
   | {
@@ -27,8 +28,12 @@ export type ContentMessage =
       type: typeof MSG_SEND_AI_MESSAGE
       payload: {
         messages: AIMessage[]
-        dialogId?: string
+        dialogId: string
       }
+    }
+  | {
+      type: typeof MSG_GET_DIALOGS
+      payload: undefined
     }
 
 export type BackgroundResponse = {

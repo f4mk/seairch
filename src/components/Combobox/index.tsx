@@ -8,14 +8,14 @@ import { OptionType, Props } from './types'
 
 export const Combobox: Props = ({
   options,
-  value,
   onChange,
   onButtonClick,
   emptyPlaceholder = 'No options found',
-  placeholder = 'Select option...',
+  placeholder = 'New dialog',
   searchPlaceholder = 'Search...',
   disabled = false,
   onChangeState,
+  selectedKey,
 }) => {
   const [open, setOpen] = useState(false)
 
@@ -35,15 +35,22 @@ export const Combobox: Props = ({
     [onChange],
   )
 
+  const selectedOption = options.find((option) => option.id === selectedKey)
+
   return (
     <div className='relative z-10'>
       <Popover open={open} onOpenChange={handleOpenChange}>
-        <Trigger value={value} placeholder={placeholder} disabled={disabled} open={open} />
+        <Trigger
+          label={selectedOption?.label}
+          placeholder={placeholder}
+          disabled={disabled}
+          open={open}
+        />
         <Content
           searchPlaceholder={searchPlaceholder}
           emptyPlaceholder={emptyPlaceholder}
           options={options}
-          value={value}
+          key={selectedOption?.id}
           open={open}
           onSelect={handleSelect}
           onButtonClick={onButtonClick}

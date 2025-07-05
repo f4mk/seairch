@@ -1,4 +1,5 @@
 import {
+  MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
   MSG_SEND_AI_MESSAGE,
@@ -13,7 +14,6 @@ import {
   DEFAULT_MAX_TOKENS,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-  HALF_HOUR_TIMEOUT_MS,
 } from './consts'
 import { getMessageService, resetMessageService } from './service'
 import type { BackgroundResponse, ContentMessage, InitConfig } from './types'
@@ -52,6 +52,9 @@ async function handleMessage(message: ContentMessage): Promise<BackgroundRespons
       case MSG_SEND_AI_MESSAGE:
         return handleSendAIMessage(payload)
 
+      case MSG_GET_DIALOGS:
+        return handleGetDialogs()
+
       default:
         return {
           success: false,
@@ -79,7 +82,6 @@ async function handleInitializeAI(payload: InitConfig): Promise<BackgroundRespon
   try {
     const client = createOpenAIClient({ apiKey, baseUrl })
     historyClient = new HistoryClient({
-      timeoutMs: HALF_HOUR_TIMEOUT_MS,
       maxHistoryMessages: DEFAULT_MAX_HISTORY_MESSAGES,
     })
     messageService = getMessageService({
@@ -153,7 +155,10 @@ async function handleResetAI(): Promise<BackgroundResponse> {
   }
 }
 
-async function handleSendAIMessage(payload: Record<string, unknown>): Promise<BackgroundResponse> {
+async function handleSendAIMessage(payload: {
+  messages: AIMessage[]
+  dialogId: string
+}): Promise<BackgroundResponse> {
   if (!messageService) {
     return {
       success: false,
@@ -162,17 +167,21 @@ async function handleSendAIMessage(payload: Record<string, unknown>): Promise<Ba
   }
 
   try {
-    const messages = payload.messages as AIMessage[]
-    const dialogId = payload.dialogId as string | undefined
-
-    if (!messages || !Array.isArray(messages)) {
+    if (!payload.messages || !Array.isArray(payload.messages)) {
       return {
         success: false,
         error: 'Messages array is required',
       }
     }
 
-    const result = await messageService.sendMessage(messages, dialogId)
+    if (!payload.dialogId) {
+      return {
+        success: false,
+        error: 'Dialog ID is required',
+      }
+    }
+
+    const result = await messageService.sendMessage(payload.messages, payload.dialogId)
 
     return {
       success: true,
@@ -185,6 +194,30 @@ async function handleSendAIMessage(payload: Record<string, unknown>): Promise<Ba
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send message',
+    }
+  }
+}
+
+async function handleGetDialogs(): Promise<BackgroundResponse> {
+  if (!historyClient) {
+    return {
+      success: false,
+      error: 'History client not initialized. Please initialize the service first.',
+    }
+  }
+
+  try {
+    const dialogs = historyClient.getDialogs()
+    return {
+      success: true,
+      data: {
+        dialogs,
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get dialogs',
     }
   }
 }

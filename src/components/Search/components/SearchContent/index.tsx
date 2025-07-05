@@ -1,35 +1,26 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { keepPreviousData } from '@tanstack/react-query'
-import { TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { Spinner } from '@/components/Spinner'
+import { DialogItem } from '@/lib/messaging/types'
 import { cn } from '@/lib/utils'
 
 import { DialogContent } from '../DialogContent'
 import { SearchControl } from '../SearchControl'
-import { useSearchQuery } from './queries'
+import { useDialogsQuery, useSearchQuery } from './queries'
 import { Props } from './types'
-
-type Option = {
-  id: string
-  label: string
-  iconButton?: React.ReactElement
-}
-
-const chats: Option[] = [
-  { id: '1', label: 'Chat One', iconButton: <TrashIcon className='w-4 h-4' /> },
-  { id: '2', label: 'Chat Two' },
-  { id: '3', label: 'Chat Three', iconButton: <TrashIcon className='w-4 h-4' /> },
-]
+import { getDefaultDialog } from './utils'
 
 export const SearchContent: Props = ({ initialQuery }) => {
   const [searchQuery, setSearchQuery] = useState(initialQuery)
-  const [dialogId, setDialogId] = useState<string | undefined>()
+  const [dialog, setDialog] = useState<DialogItem>(getDefaultDialog())
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { isFetching, isLoading, data, error, refetch } = useSearchQuery(searchQuery, dialogId, {
+  const { isFetching, isLoading, data, error, refetch } = useSearchQuery(searchQuery, dialog.id, {
     placeholderData: keepPreviousData,
   })
+
+  const { data: dialogs, isFetching: isDialogsLoading, refetch: refetchDialogs } = useDialogsQuery()
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return
@@ -38,10 +29,9 @@ export const SearchContent: Props = ({ initialQuery }) => {
         textareaRef.current?.focus()
       }, 0)
       if (result.isError) return
-      if (result.data?.dialogId) {
-        setDialogId(result.data.dialogId)
-      }
+
       setSearchQuery('')
+      refetchDialogs()
     })
   }
 
@@ -49,16 +39,16 @@ export const SearchContent: Props = ({ initialQuery }) => {
     ? [{ role: 'assistant' as const, content: `Error: ${error.message}` }]
     : data?.messages || []
 
-  // TODO: add later
-  const [selectedChat, setSelectedChat] = useState<Option | null>(null)
-  function handleDelete(option: Option) {
+  function handleDelete(option: DialogItem) {
     alert(`Delete chat ${option.label}`)
   }
+
+  const dialogOptions = useMemo(() => [dialog, ...(dialogs || [])], [dialog, dialogs])
 
   return (
     <div
       className={cn(
-        'flex-1 pt-0 px-6 pb-6 flex h-full flex-col gap-4 overflow-hidden',
+        'flex-1 pt-0 px-6 pb-4 flex h-full flex-col gap-4 overflow-hidden',
         messages.length ? 'justify-between' : 'justify-end',
       )}
     >
@@ -80,13 +70,13 @@ export const SearchContent: Props = ({ initialQuery }) => {
         handleSearch={handleSearch}
         isLoading={isFetching}
       />
-      <div>
+      <div className='w-[40%]'>
         <Combobox
-          options={chats}
-          value={selectedChat}
-          onChange={setSelectedChat}
+          options={dialogOptions}
+          onChange={(option) => setDialog(option)}
           onButtonClick={handleDelete}
-          onChangeState={() => {}}
+          disabled={isDialogsLoading}
+          selectedKey={dialog.id}
         />
       </div>
     </div>
