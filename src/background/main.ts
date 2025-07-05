@@ -1,13 +1,27 @@
-import OpenAI from 'openai'
+import {
+  MSG_INITIALIZE_AI,
+  MSG_RESET_AI,
+  MSG_SEND_AI_MESSAGE,
+  MSG_UPDATE_AI,
+} from '@/consts/messages'
+import type { AIMessage } from '@/lib/messaging/types'
 
-import { getAIService, resetAIService } from './service'
-import type { AIMessage } from './service/types'
-import type { BackgroundResponse, ContentMessage } from './types'
+import { HistoryClient } from './clients/historyClient'
+import { createOpenAIClient } from './clients/openaiClient'
+import {
+  DEFAULT_MAX_HISTORY_MESSAGES,
+  DEFAULT_MAX_TOKENS,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+  HALF_HOUR_TIMEOUT_MS,
+} from './consts'
+import { getMessageService, resetMessageService } from './service'
+import type { BackgroundResponse, ContentMessage, InitConfig } from './types'
 
-let aiService: ReturnType<typeof getAIService> | null = null
+let messageService: ReturnType<typeof getMessageService> | null = null
+let historyClient: HistoryClient | null = null
 
 chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResponse) => {
-  console.log('Background received message:', message)
   handleMessage(message)
     .then(sendResponse)
     .catch((error) => {
@@ -26,17 +40,17 @@ async function handleMessage(message: ContentMessage): Promise<BackgroundRespons
 
   try {
     switch (type) {
-      case 'initialize_ai':
-        return await handleInitializeAI(payload)
+      case MSG_INITIALIZE_AI:
+        return handleInitializeAI(payload)
 
-      case 'reset_ai':
-        return await handleResetAI()
+      case MSG_RESET_AI:
+        return handleResetAI()
 
-      case 'send_ai_message':
-        return await handleSendAIMessage(payload)
+      case MSG_UPDATE_AI:
+        return handleUpdateAI(payload)
 
-      case 'send_ai_message_stream':
-        return await handleSendAIMessageStream(payload)
+      case MSG_SEND_AI_MESSAGE:
+        return handleSendAIMessage(payload)
 
       default:
         return {
@@ -52,10 +66,8 @@ async function handleMessage(message: ContentMessage): Promise<BackgroundRespons
   }
 }
 
-async function handleInitializeAI(payload: Record<string, unknown>): Promise<BackgroundResponse> {
-  const apiKey = payload.apiKey as string
-  const baseUrl = payload.baseUrl as string
-  const defaultModel = payload.defaultModel as string
+async function handleInitializeAI(payload: InitConfig): Promise<BackgroundResponse> {
+  const { apiKey, baseUrl, defaultModel, systemPrompt, maxTokens, temperature } = payload
 
   if (!apiKey || !baseUrl || !defaultModel) {
     return {
@@ -65,13 +77,19 @@ async function handleInitializeAI(payload: Record<string, unknown>): Promise<Bac
   }
 
   try {
-    const client = new OpenAI({
-      baseURL: baseUrl,
-      apiKey,
-      dangerouslyAllowBrowser: true,
+    const client = createOpenAIClient({ apiKey, baseUrl })
+    historyClient = new HistoryClient({
+      timeoutMs: HALF_HOUR_TIMEOUT_MS,
+      maxHistoryMessages: DEFAULT_MAX_HISTORY_MESSAGES,
     })
-
-    aiService = getAIService(client, defaultModel)
+    messageService = getMessageService({
+      client,
+      historyClient,
+      defaultModel,
+      systemPrompt: systemPrompt || DEFAULT_SYSTEM_PROMPT,
+      maxTokens: maxTokens || DEFAULT_MAX_TOKENS,
+      temperature: temperature || DEFAULT_TEMPERATURE,
+    })
 
     return {
       success: true,
@@ -85,11 +103,43 @@ async function handleInitializeAI(payload: Record<string, unknown>): Promise<Bac
   }
 }
 
+async function handleUpdateAI(payload: Record<string, unknown>): Promise<BackgroundResponse> {
+  if (!messageService) {
+    return {
+      success: false,
+      error: 'AI service not initialized. Please initialize the service first.',
+    }
+  }
+
+  try {
+    const systemPrompt = payload.systemPrompt as string
+    const maxTokens = payload.maxTokens as number
+    const temperature = payload.temperature as number
+
+    messageService.updateSettings({
+      systemPrompt,
+      maxTokens,
+      temperature,
+    })
+
+    return {
+      success: true,
+      data: { message: 'AI service updated successfully' },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update service',
+    }
+  }
+}
+
 async function handleResetAI(): Promise<BackgroundResponse> {
   try {
     // Reset the service
-    resetAIService()
-    aiService = null
+    resetMessageService()
+    messageService = null
+    historyClient = null
 
     return {
       success: true,
@@ -104,7 +154,7 @@ async function handleResetAI(): Promise<BackgroundResponse> {
 }
 
 async function handleSendAIMessage(payload: Record<string, unknown>): Promise<BackgroundResponse> {
-  if (!aiService) {
+  if (!messageService) {
     return {
       success: false,
       error: 'AI service not initialized. Please provide API configuration first.',
@@ -113,7 +163,7 @@ async function handleSendAIMessage(payload: Record<string, unknown>): Promise<Ba
 
   try {
     const messages = payload.messages as AIMessage[]
-    const options = (payload.options as Record<string, unknown>) || {}
+    const dialogId = payload.dialogId as string | undefined
 
     if (!messages || !Array.isArray(messages)) {
       return {
@@ -122,51 +172,19 @@ async function handleSendAIMessage(payload: Record<string, unknown>): Promise<Ba
       }
     }
 
-    const response = await aiService.sendMessage(messages, options)
+    const result = await messageService.sendMessage(messages, dialogId)
 
     return {
       success: true,
-      data: { content: response },
+      data: {
+        messages: result.messages,
+        dialogId: result.dialogId,
+      },
     }
   } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send message',
-    }
-  }
-}
-
-async function handleSendAIMessageStream(
-  payload: Record<string, unknown>,
-): Promise<BackgroundResponse> {
-  if (!aiService) {
-    return {
-      success: false,
-      error: 'AI service not initialized. Please provide API configuration first.',
-    }
-  }
-
-  try {
-    const messages = payload.messages as AIMessage[]
-    const options = (payload.options as Record<string, unknown>) || {}
-
-    if (!messages || !Array.isArray(messages)) {
-      return {
-        success: false,
-        error: 'Messages array is required',
-      }
-    }
-
-    aiService.sendMessageStream(messages, options)
-
-    return {
-      success: true,
-      data: { message: 'Streaming started' },
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to start streaming',
     }
   }
 }

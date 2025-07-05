@@ -15,3 +15,15 @@ export const applyDarkClass = (target: HTMLElement) => {
     console.error('Error applying dark class', error)
   }
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const throttle = <T extends (...args: any[]) => void>(cb: T, delay: number): T => {
+  let timeoutId: number | null = null
+  return ((...args: Parameters<T>) => {
+    if (timeoutId === null) {
+      timeoutId = window.setTimeout(() => {
+        cb(...args)
+        timeoutId = null
+      }, delay)
+    }
+  }) as T
+}

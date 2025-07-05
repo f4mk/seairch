@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-export const useDraggable = (ref: React.RefObject<HTMLElement | null>) => {
+import { throttle } from '@/lib/utils'
+
+export const useDraggable = (ref: React.RefObject<HTMLElement | null>, throttleTime?: number) => {
   const [isDragging, setIsDragging] = useState(false)
   const [position, setPosition] = useState<{ x: number | null; y: number | null }>({
     x: null,
     y: null,
   })
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const initialRectRef = useRef<DOMRect | null>(null)
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect()
+      initialRectRef.current = rect
       setDragOffset({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
@@ -21,12 +25,11 @@ export const useDraggable = (ref: React.RefObject<HTMLElement | null>) => {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (isDragging && ref.current) {
-        const rect = ref.current.getBoundingClientRect()
+      if (isDragging && initialRectRef.current) {
+        const rect = initialRectRef.current
         const newX = e.clientX - dragOffset.x
         const newY = e.clientY - dragOffset.y
 
-        // Keep modal within viewport bounds
         const maxX = window.innerWidth - rect.width
         const maxY = window.innerHeight - rect.height
 
@@ -39,25 +42,30 @@ export const useDraggable = (ref: React.RefObject<HTMLElement | null>) => {
         })
       }
     },
-    [isDragging, dragOffset, ref],
+    [isDragging, dragOffset],
+  )
+
+  const throttledMouseMove = useMemo(
+    () => (throttleTime ? throttle(handleMouseMove, throttleTime) : handleMouseMove),
+    [handleMouseMove, throttleTime],
   )
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
+    initialRectRef.current = null
   }, [])
 
-  // Add global mouse event listeners for dragging
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mousemove', throttledMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
 
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mousemove', throttledMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+  }, [isDragging, throttledMouseMove, handleMouseUp])
 
   return {
     position,

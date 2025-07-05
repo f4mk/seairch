@@ -214,10 +214,11 @@ export async function initializeAI(
 export async function sendAIMessage(
   messages: AIMessage[],
   options: Record<string, unknown> = {},
-): Promise<{ content: string }> {
+): Promise<{ messages: AIMessage[]; dialogId: string }> {
+  const { dialogId } = options
   return sendToBackground(MSG_SEND_AI_MESSAGE, {
     messages,
-    options,
+    dialogId,
   })
 }
 
@@ -227,7 +228,7 @@ export async function sendAIMessage(
 export async function sendAIMessageStream(
   messages: AIMessage[],
   options: Record<string, unknown> = {},
-): Promise<{ message: string }> {
+): Promise<{ messages: AIMessage[] }> {
   return sendToBackground(MSG_SEND_AI_MESSAGE_STREAM, {
     messages,
     options,

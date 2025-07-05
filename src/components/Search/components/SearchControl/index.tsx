@@ -10,10 +10,12 @@ export const SearchControl: Props = ({
   setSearchQuery,
   handleSearch,
   isLoading = false,
+  ref,
 }) => {
   return (
     <div className='flex gap-2'>
       <Textarea
+        ref={ref}
         autoFocus
         placeholder='Enter your search query...'
         value={searchQuery}

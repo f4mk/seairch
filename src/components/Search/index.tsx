@@ -1,36 +1,33 @@
-import { useRef, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
 import { Z_INDEX_MODAL } from '@/consts/styles'
 import { useDraggable } from '@/hooks/useDraggable'
 import { cn } from '@/lib/utils'
 
-import { SearchControl } from './components/SearchControl'
+import { SearchContent } from './components/SearchContent'
 import { SearchHeader } from './components/SearchHeader'
-import { TextContent } from './components/TextContent'
-import { useSearchQuery } from './queries'
+import { THROTTLE_TIME } from './consts'
 import { Props } from './types'
 
 export const Search: Props = ({ onClose, initialQuery = '' }) => {
-  const [searchQuery, setSearchQuery] = useState(initialQuery)
   const modalRef = useRef<HTMLDivElement>(null)
-  const { position, isDragging, handleMouseDown } = useDraggable(modalRef)
+  const [dimensions, setDimensions] = useState<{ width?: number; height?: number }>({})
+  const { position, isDragging, handleMouseDown } = useDraggable(modalRef, THROTTLE_TIME)
 
-  const { isLoading, data, error, refetch } = useSearchQuery(searchQuery, false)
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return
-    refetch()
-  }
-
-  const textContent = error
-    ? `Error: Failed to get search results:${error.message}`
-    : data?.content || ''
+  const setModalRef = useCallback((element: HTMLDivElement | null) => {
+    modalRef.current = element
+    if (element) {
+      setDimensions({
+        width: element.clientWidth,
+        height: element.clientHeight,
+      })
+    }
+  }, [])
 
   return (
     <div
-      ref={modalRef}
+      ref={setModalRef}
       className='fixed'
       style={{
         left: position.x ?? '50%',
@@ -42,34 +39,14 @@ export const Search: Props = ({ onClose, initialQuery = '' }) => {
     >
       <Card
         className={cn(
-          'pt-0 h-full flex flex-col resize overflow-auto min-w-96 max-w-screen max-h-screen gap-0',
-          textContent ? 'min-h-96' : 'min-h-48',
+          'pt-0 h-full flex flex-col resize overflow-auto min-h-96 min-w-96 max-w-screen max-h-screen gap-0',
         )}
-        style={{ width: modalRef.current?.clientWidth, height: modalRef.current?.clientHeight }}
+        style={{ width: dimensions.width || undefined, height: dimensions.height || undefined }}
       >
         <div onMouseDown={handleMouseDown} className='cursor-move relative z-10'>
           <SearchHeader onClose={onClose} />
         </div>
-        <div
-          className={cn(
-            'flex-1 pt-0 px-6 pb-6 flex h-full flex-col gap-4 overflow-hidden',
-            textContent ? 'justify-between' : 'justify-end',
-          )}
-        >
-          {isLoading ? (
-            <div className='flex-1 flex items-center justify-center'>
-              <Loader2 className='w-4 h-4 animate-spin' />
-            </div>
-          ) : (
-            textContent && <TextContent text={textContent} />
-          )}
-          <SearchControl
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            handleSearch={handleSearch}
-            isLoading={isLoading}
-          />
-        </div>
+        <SearchContent initialQuery={initialQuery} />
       </Card>
     </div>
   )
