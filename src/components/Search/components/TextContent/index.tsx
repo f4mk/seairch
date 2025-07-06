@@ -2,9 +2,9 @@ import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 
+import { components } from '@/components/MessageBubble/consts'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
-import { components } from './consts'
 import { Props } from './types'
 
 export const TextContent: Props = ({ text }) => {
