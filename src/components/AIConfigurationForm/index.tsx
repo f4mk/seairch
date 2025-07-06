@@ -1,19 +1,48 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { MSG_INITIALIZE_AI, MSG_RESET_AI } from '@/consts/messages'
-import { sendToBackground } from '@/lib/messaging'
+import {
+  DEFAULT_MAX_HISTORY_MESSAGES,
+  MAX_MAX_HISTORY_MESSAGES,
+  MIN_MAX_HISTORY_MESSAGES,
+} from '@/consts/background'
+import { initializeAI, resetAI } from '@/lib/messaging'
 import { cn } from '@/lib/utils'
+
+import { STORAGE_KEYS } from './consts'
 
 export const AIConfigurationForm = () => {
   const [apiKey, setApiKey] = useState('')
-  const [modelName, setModelName] = useState('deepseek-chat')
-  const [url, setUrl] = useState('https://api.deepseek.com/v1')
+  const [modelName, setModelName] = useState('')
+  const [url, setUrl] = useState('')
+  const [maxHistoryMessages, setMaxHistoryMessages] = useState(DEFAULT_MAX_HISTORY_MESSAGES)
   const [isLoading, setIsLoading] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    try {
+      chrome.storage.local.get(
+        [
+          STORAGE_KEYS.apiKey,
+          STORAGE_KEYS.modelName,
+          STORAGE_KEYS.baseUrl,
+          STORAGE_KEYS.maxHistoryMessages,
+        ],
+        (res) => {
+          if (res[STORAGE_KEYS.apiKey]) setApiKey(res[STORAGE_KEYS.apiKey])
+          if (res[STORAGE_KEYS.modelName]) setModelName(res[STORAGE_KEYS.modelName])
+          if (res[STORAGE_KEYS.baseUrl]) setUrl(res[STORAGE_KEYS.baseUrl])
+          if (res[STORAGE_KEYS.maxHistoryMessages])
+            setMaxHistoryMessages(res[STORAGE_KEYS.maxHistoryMessages])
+        },
+      )
+    } catch (error) {
+      console.error('Error accessing Chrome storage:', error)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,11 +50,18 @@ export const AIConfigurationForm = () => {
     setMessage('')
 
     try {
-      await sendToBackground(MSG_INITIALIZE_AI, {
-        apiKey,
-        baseUrl: url,
-        defaultModel: modelName,
-      })
+      await initializeAI(apiKey, url, modelName, maxHistoryMessages)
+
+      try {
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.apiKey]: apiKey,
+          [STORAGE_KEYS.modelName]: modelName,
+          [STORAGE_KEYS.baseUrl]: url,
+          [STORAGE_KEYS.maxHistoryMessages]: maxHistoryMessages,
+        })
+      } catch (error) {
+        console.error('Error saving to Chrome storage:', error)
+      }
 
       setMessage('AI service initialized successfully!')
     } catch (error) {
@@ -41,8 +77,7 @@ export const AIConfigurationForm = () => {
     setMessage('')
 
     try {
-      await sendToBackground(MSG_RESET_AI, {})
-
+      await resetAI()
       setMessage('AI service reset successfully!')
     } catch (error) {
       setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -96,6 +131,20 @@ export const AIConfigurationForm = () => {
               onChange={(e) => setUrl(e.target.value)}
               placeholder='Enter API base URL'
               required
+            />
+          </div>
+          <div className='space-y-2'>
+            <label htmlFor='maxHistoryMessages' className='text-sm font-medium text-foreground'>
+              Max History Messages
+            </label>
+            <Input
+              id='maxHistoryMessages'
+              type='number'
+              value={maxHistoryMessages}
+              onChange={(e) => setMaxHistoryMessages(parseInt(e.target.value, 10))}
+              placeholder={String(DEFAULT_MAX_HISTORY_MESSAGES)}
+              min={MIN_MAX_HISTORY_MESSAGES}
+              max={MAX_MAX_HISTORY_MESSAGES}
             />
           </div>
           <Button type='submit' disabled={isLoading} className='w-full'>

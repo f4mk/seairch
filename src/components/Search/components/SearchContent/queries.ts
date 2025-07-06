@@ -1,8 +1,15 @@
-import { useMutation, UseMutationOptions, useQuery, UseQueryOptions } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef } from 'react'
+import {
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+  useQueryClient,
+  UseQueryOptions,
+} from '@tanstack/react-query'
 
-import { MSG_DELETE_DIALOG, MSG_GET_DIALOGS } from '@/consts/messages'
-import { sendAIMessage, sendToBackground } from '@/lib/messaging'
-import { AIMessage, DialogItem } from '@/lib/messaging/types'
+import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
+import { deleteDialog, getDialogs, sendAIMessage } from '@/lib/messaging'
+import { AIMessage, DialogItem, StreamMessage } from '@/lib/messaging/types'
 
 import { SearchResult } from './types'
 
@@ -27,7 +34,7 @@ export const useSearchQuery = (
   options?: Partial<UseQueryOptions<SearchResult, Error>>,
 ) => {
   return useQuery({
-    queryKey: ['search', query, dialogId],
+    queryKey: ['search', query],
     queryFn: () => performSearch(query, dialogId),
     enabled: false,
     ...options,
@@ -35,7 +42,7 @@ export const useSearchQuery = (
 }
 
 export const fetchDialogs = async (): Promise<DialogItem[]> => {
-  const response = await sendToBackground<{ dialogs: DialogItem[] }>(MSG_GET_DIALOGS)
+  const response = await getDialogs()
   return response.dialogs
 }
 
@@ -47,15 +54,71 @@ export const useDialogsQuery = (options?: Partial<UseQueryOptions<DialogItem[], 
   })
 }
 
-export const deleteDialog = async (dialogId: string): Promise<void> => {
-  await sendToBackground(MSG_DELETE_DIALOG, { dialogId })
+export const removeDialog = async (dialogId: string): Promise<void> => {
+  await deleteDialog(dialogId)
 }
 
 export const useDeleteDialogQuery = (
   options?: Partial<UseMutationOptions<void, Error, string>>,
 ) => {
   return useMutation({
-    mutationFn: (dialogId: string) => deleteDialog(dialogId),
+    mutationFn: (dialogId: string) => removeDialog(dialogId),
+    ...options,
+  })
+}
+
+export function useStreamingSearchReactQuery(
+  query: string,
+  dialogId: string,
+  options?: Partial<UseQueryOptions<SearchResult, Error>>,
+) {
+  const queryClient = useQueryClient()
+  const contentRef = useRef('')
+  const queryKey = useMemo(() => ['search', query, dialogId], [query, dialogId])
+
+  useEffect(() => {
+    const handleChunk = (e: Event) => {
+      const customEvent = e as CustomEvent<StreamMessage>
+      const message = customEvent.detail
+
+      if (message.type === MSG_AI_STREAM_CHUNK && message.payload.dialogId === dialogId) {
+        const chunk = message.payload.chunk
+        contentRef.current += chunk
+
+        queryClient.setQueryData(queryKey, (oldData: SearchResult) => {
+          if (!oldData) return oldData
+          const oldMessages = oldData.messages || []
+          if (
+            oldMessages.length === 0 ||
+            oldMessages[oldMessages.length - 1].role !== 'assistant'
+          ) {
+            return {
+              ...oldData,
+              messages: [...oldMessages, { role: 'assistant', content: contentRef.current }],
+            }
+          } else {
+            const newMessages = [...oldMessages]
+            newMessages[newMessages.length - 1] = {
+              ...newMessages[newMessages.length - 1],
+              content: contentRef.current,
+            }
+            return { ...oldData, messages: newMessages }
+          }
+        })
+      }
+    }
+
+    document.addEventListener(MSG_AI_STREAM_CHUNK, handleChunk as EventListener)
+    return () => {
+      document.removeEventListener(MSG_AI_STREAM_CHUNK, handleChunk as EventListener)
+      contentRef.current = ''
+    }
+  }, [dialogId, query, queryClient, queryKey])
+
+  return useQuery({
+    queryKey,
+    queryFn: () => performSearch(query, dialogId),
+    enabled: false,
     ...options,
   })
 }

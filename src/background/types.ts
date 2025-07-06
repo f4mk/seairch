@@ -55,4 +55,5 @@ export type InitConfig = {
   systemPrompt?: string
   maxTokens?: number
   temperature?: number
+  maxHistoryMessages?: number
 }

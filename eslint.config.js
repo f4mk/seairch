@@ -23,6 +23,10 @@ export default tseslint.config([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        project: './tsconfig.app.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       import: importPlugin,
@@ -79,6 +83,9 @@ export default tseslint.config([
 
       // React specific
       'react-hooks/exhaustive-deps': 'warn',
+
+      // Async/await rules
+      '@typescript-eslint/no-floating-promises': 'warn',
     },
   },
 ]) 

@@ -4,14 +4,22 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { MSG_UPDATE_AI } from '@/consts/messages'
-import { sendToBackground } from '@/lib/messaging'
+import {
+  DEFAULT_MAX_TOKENS,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+  MAX_MAX_TOKENS,
+  MAX_TEMPERATURE,
+  MIN_MAX_TOKENS,
+  MIN_TEMPERATURE,
+} from '@/consts/background'
+import { updateAI } from '@/lib/messaging'
 import { cn } from '@/lib/utils'
 
 export const AISettingsForm = () => {
-  const [systemPrompt, setSystemPrompt] = useState('')
-  const [maxTokens, setMaxTokens] = useState('1000')
-  const [temperature, setTemperature] = useState('0.7')
+  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT)
+  const [maxTokens, setMaxTokens] = useState(String(DEFAULT_MAX_TOKENS))
+  const [temperature, setTemperature] = useState(String(DEFAULT_TEMPERATURE))
   const [isUpdating, setIsUpdating] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -23,11 +31,14 @@ export const AISettingsForm = () => {
     try {
       const updatePayload: Record<string, unknown> = {}
 
-      if (systemPrompt.trim()) updatePayload.systemPrompt = systemPrompt.trim()
-      if (maxTokens.trim() !== '1000') updatePayload.maxTokens = parseInt(maxTokens, 10)
-      if (temperature.trim() !== '0.7') updatePayload.temperature = parseFloat(temperature)
+      if (systemPrompt.trim() !== DEFAULT_SYSTEM_PROMPT)
+        updatePayload.systemPrompt = systemPrompt.trim()
+      if (parseInt(maxTokens, 10) !== DEFAULT_MAX_TOKENS)
+        updatePayload.maxTokens = parseInt(maxTokens, 10)
+      if (parseFloat(temperature) !== DEFAULT_TEMPERATURE)
+        updatePayload.temperature = parseFloat(temperature)
 
-      await sendToBackground(MSG_UPDATE_AI, updatePayload)
+      await updateAI(updatePayload)
 
       setMessage('AI service updated successfully!')
     } catch (error) {
@@ -67,9 +78,9 @@ export const AISettingsForm = () => {
               type='number'
               value={maxTokens}
               onChange={(e) => setMaxTokens(e.target.value)}
-              placeholder='1000'
-              min='1'
-              max='4000'
+              placeholder={String(DEFAULT_MAX_TOKENS)}
+              min={MIN_MAX_TOKENS}
+              max={MAX_MAX_TOKENS}
             />
           </div>
           <div className='space-y-2'>
@@ -81,9 +92,9 @@ export const AISettingsForm = () => {
               type='number'
               value={temperature}
               onChange={(e) => setTemperature(e.target.value)}
-              placeholder='0.7'
-              min='0'
-              max='2'
+              placeholder={String(DEFAULT_TEMPERATURE)}
+              min={MIN_TEMPERATURE}
+              max={MAX_TEMPERATURE}
               step='0.1'
             />
           </div>

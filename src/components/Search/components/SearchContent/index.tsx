@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { keepPreviousData } from '@tanstack/react-query'
 import { TrashIcon } from 'lucide-react'
 
@@ -6,7 +6,7 @@ import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
 import { Spinner } from '@/components/Spinner'
 import { AIMessage, DialogItem } from '@/lib/messaging/types'
-import { cn } from '@/lib/utils'
+import { cn, generateDialogId } from '@/lib/utils'
 
 import { DialogContent } from '../DialogContent'
 import { SearchControl } from '../SearchControl'
@@ -16,10 +16,10 @@ import { getDefaultDialog } from './utils'
 
 export const SearchContent: Props = ({ initialQuery }) => {
   const [searchQuery, setSearchQuery] = useState(initialQuery)
-  const [dialog, setDialog] = useState<DialogItem>(getDefaultDialog())
+  const [dialog, setDialog] = useState<DialogItem>(getDefaultDialog(generateDialogId()))
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const { isFetching, isLoading, data, error, refetch } = useSearchQuery(searchQuery, dialog.id, {
+  const { data, error, isFetching, isLoading, refetch } = useSearchQuery(searchQuery, dialog.id, {
     placeholderData: keepPreviousData,
   })
 
@@ -28,22 +28,15 @@ export const SearchContent: Props = ({ initialQuery }) => {
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return
-    refetch().then((result) => {
+
+    void refetch().then(() => {
       setTimeout(() => {
         textareaRef.current?.focus()
       }, 0)
-      if (result.isError) return
-      setDialog(result.data?.dialog || getDefaultDialog())
       setSearchQuery('')
-      refetchDialogs()
+      void refetchDialogs()
     })
   }
-
-  useEffect(() => {
-    if (dialog.id) {
-      refetch()
-    }
-  }, [dialog.id, refetch])
 
   let messages: AIMessage[]
   if (error) {
@@ -58,7 +51,7 @@ export const SearchContent: Props = ({ initialQuery }) => {
     (option: OptionType) => {
       deleteDialog(option.id, {
         onSuccess: () => {
-          refetchDialogs()
+          void refetchDialogs()
         },
       })
     },

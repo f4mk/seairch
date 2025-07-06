@@ -6,6 +6,7 @@ export default defineManifest({
   manifest_version: 3,
   name: pkg.name,
   version: pkg.version,
+  permissions: ['storage', 'activeTab', 'tabs'],
   icons: {
     48: 'public/logo.png',
   },

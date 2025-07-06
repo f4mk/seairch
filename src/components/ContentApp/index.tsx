@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import { ID_HOST } from '@/consts/styles'
-
-import { Search } from '../Search'
+import { Search } from '@/components/Search'
+import { StreamEventsProvider } from '@/components/StreamEventProvider'
+import { ID_HOST } from '@/consts/host'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,7 +50,9 @@ export const ContentApp = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {show && <Search onClose={() => setShow(false)} initialQuery={selectedText} />}
+      <StreamEventsProvider>
+        {show && <Search onClose={() => setShow(false)} initialQuery={selectedText} />}
+      </StreamEventsProvider>
     </QueryClientProvider>
   )
 }
