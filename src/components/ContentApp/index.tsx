@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Search } from '@/components/Search'
 import { StreamEventsProvider } from '@/components/StreamEventProvider'
 import { ID_HOST } from '@/consts/host'
+import { useAutoInitAI } from '@/lib/hooks'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +48,8 @@ export const ContentApp = () => {
       hostRef.current.style.pointerEvents = show ? 'auto' : 'none'
     }
   }, [show])
+
+  useAutoInitAI()
 
   return (
     <QueryClientProvider client={queryClient}>
