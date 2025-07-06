@@ -1,6 +1,6 @@
 import type OpenAI from 'openai'
 
-import { AIMessage, DialogItem } from '@/lib/messaging/types'
+import { AIMessage, ChunkMessage, DialogItem } from '@/lib/messaging/types'
 
 import { HistoryClient } from '../../clients/historyClient'
 import { HistoryItem } from '../../clients/historyClient/types'
@@ -105,13 +105,19 @@ export class HistoryService {
     })
 
     let content = ''
+    let index = 0
     for await (const part of stream) {
       const chunk = part.choices[0]?.delta?.content
       if (chunk) {
         content += chunk
-        onChunk?.(chunk)
+        onChunk?.(JSON.stringify({ role: 'assistant', content: chunk, index } as ChunkMessage))
+        index += 1
       }
     }
+
+    onChunk?.(
+      JSON.stringify({ role: 'assistant', content: '', index, isDone: true } as ChunkMessage),
+    )
 
     await this.addMessage(dialogId, { role: 'assistant', content })
 

@@ -1,15 +1,15 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
 import { StreamMessage } from '@/lib/messaging/types'
 
-type StreamMessageCallback = (message: StreamMessage) => void
+import { StreamEventsContext, SubscribersMap } from './context'
 
-type SubscribersMap = Map<string, Set<StreamMessageCallback>>
+type StreamChunkCallback = (chunk: string) => void
 
-const StreamEventsContext = createContext<{
-  subscribe: (dialogId: string, callback: StreamMessageCallback) => () => void
-} | null>(null)
+type StreamCallbacks = {
+  onChunk: StreamChunkCallback
+}
 
 export const StreamEventsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const subscribers = useRef<SubscribersMap>(new Map())
@@ -18,13 +18,14 @@ export const StreamEventsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const handler = (e: Event) => {
       const customEvent = e as CustomEvent<StreamMessage>
       const message = customEvent.detail
-      const dialogId = message.payload?.dialogId
 
-      if (!dialogId) return
+      if (message.type !== MSG_AI_STREAM_CHUNK) return
 
+      const { dialogId, chunk } = message.payload
       const callbacks = subscribers.current.get(dialogId)
+
       if (callbacks) {
-        callbacks.forEach((cb) => cb(message))
+        callbacks.onChunk(chunk)
       }
     }
 
@@ -35,26 +36,15 @@ export const StreamEventsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [])
 
-  const subscribe = (dialogId: string, callback: StreamMessageCallback) => {
-    if (!subscribers.current.has(dialogId)) {
-      subscribers.current.set(dialogId, new Set())
-    }
-    subscribers.current.get(dialogId)!.add(callback)
+  const subscribe = (dialogId: string, callbacks: StreamCallbacks) => {
+    subscribers.current.set(dialogId, callbacks)
 
     return () => {
-      subscribers.current.get(dialogId)?.delete(callback)
+      subscribers.current.delete(dialogId)
     }
   }
 
   return (
     <StreamEventsContext.Provider value={{ subscribe }}>{children}</StreamEventsContext.Provider>
   )
-}
-
-export const useStreamEvents = () => {
-  const context = useContext(StreamEventsContext)
-  if (!context) {
-    throw new Error('useStreamEvents must be used within a StreamEventsProvider')
-  }
-  return context
 }

@@ -1,3 +1,5 @@
+import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
+
 import { HistoryClient } from './clients/historyClient'
 import { createOpenAIClient, OpenAIConfig } from './clients/openaiClient'
 import { HistoryService } from './services/historyService'
@@ -18,7 +20,7 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, sender, sendRespo
   const createChannel = (dialogId: string) => (chunk: string) => {
     if (sender.tab?.id != null) {
       void chrome.tabs.sendMessage(sender.tab.id, {
-        type: 'AI_STREAM_CHUNK',
+        type: MSG_AI_STREAM_CHUNK,
         payload: { dialogId, chunk },
       })
     }

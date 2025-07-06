@@ -1,9 +1,10 @@
 import {
   MSG_DELETE_DIALOG,
+  MSG_FETCH_AI_MESSAGE,
   MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
-  MSG_SEND_AI_MESSAGE,
+  MSG_SEARCH_AI_MESSAGE_STREAM,
   MSG_UPDATE_AI,
 } from '@/consts/messages'
 
@@ -69,11 +70,23 @@ export async function updateAI(payload: Record<string, unknown>): Promise<{ mess
 /**
  * Send a message to AI and get a complete response
  */
-export async function sendAIMessage(params: {
-  message?: AIMessage
+export async function fetchAIMessage(params: {
   dialogId: string
-}): Promise<{ messages: AIMessage[]; dialog: DialogItem }> {
-  return sendToBackground(MSG_SEND_AI_MESSAGE, params)
+}): Promise<{ dialog: DialogItem; messages: AIMessage[] }> {
+  return sendToBackground(MSG_FETCH_AI_MESSAGE, params)
+}
+
+export async function searchAIMessageStream({
+  dialogId,
+  query,
+}: {
+  dialogId: string
+  query: string
+}): Promise<{ dialog: DialogItem }> {
+  return sendToBackground(MSG_SEARCH_AI_MESSAGE_STREAM, {
+    dialogId,
+    query,
+  })
 }
 
 /**

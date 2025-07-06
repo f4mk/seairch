@@ -8,13 +8,14 @@ import {
 } from '@/consts/background'
 import {
   MSG_DELETE_DIALOG,
+  MSG_FETCH_AI_MESSAGE,
   MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
-  MSG_SEND_AI_MESSAGE,
+  MSG_SEARCH_AI_MESSAGE_STREAM,
   MSG_UPDATE_AI,
 } from '@/consts/messages'
-import type { AIMessage } from '@/lib/messaging/types'
+import { ChunkMessage } from '@/lib/messaging/types'
 
 import { OpenAIConfig } from '../../clients/openaiClient'
 import type { BackgroundResponse, ContentMessage, InitConfig } from '../../types'
@@ -54,8 +55,11 @@ export class MessageService {
         case MSG_UPDATE_AI:
           return this.handleUpdateAI(payload)
 
-        case MSG_SEND_AI_MESSAGE:
-          return this.handleSendAIMessage(payload, createChannel)
+        case MSG_FETCH_AI_MESSAGE:
+          return this.handleFetchAIMessage(payload)
+
+        case MSG_SEARCH_AI_MESSAGE_STREAM:
+          return this.handleSearchAIMessageStream(payload, createChannel)
 
         case MSG_GET_DIALOGS:
           return this.handleGetDialogs()
@@ -166,14 +170,42 @@ export class MessageService {
       }
     }
   }
-
-  private async handleSendAIMessage(
-    payload: {
-      message?: AIMessage
-      dialogId: string
-    },
+  private async handleSearchAIMessageStream(
+    payload: { dialogId: string; query: string },
     createChannel: (dialogId: string) => (chunk: string) => void,
   ): Promise<BackgroundResponse> {
+    if (!this.historyService) {
+      return {
+        success: false,
+        error: 'AI service not initialized. Please provide API configuration first.',
+      }
+    }
+
+    try {
+      const onChunk = createChannel(payload.dialogId)
+
+      const chunkMessage: ChunkMessage = {
+        role: 'user',
+        content: payload.query,
+        index: 0,
+      }
+      onChunk(JSON.stringify(chunkMessage))
+
+      const result = await this.historyService.sendMessage(chunkMessage, payload.dialogId, onChunk)
+
+      return {
+        success: true,
+        data: result,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to send message',
+      }
+    }
+  }
+
+  private async handleFetchAIMessage(payload: { dialogId: string }): Promise<BackgroundResponse> {
     if (!this.historyService) {
       return {
         success: false,
@@ -189,35 +221,22 @@ export class MessageService {
         }
       }
 
-      if (!payload.message) {
-        const history = await this.historyService.getUserHistory(payload.dialogId)
-        if (!history) {
-          return {
-            success: false,
-            error: 'History not found',
-          }
-        }
-
+      const history = await this.historyService.getUserHistory(payload.dialogId)
+      if (!history) {
         return {
-          success: true,
-          data: history,
+          success: false,
+          error: 'History not found',
         }
       }
-      const onChunk = createChannel(payload.dialogId)
-      const result = await this.historyService.sendMessage(
-        payload.message,
-        payload.dialogId,
-        onChunk,
-      )
 
       return {
         success: true,
-        data: result,
+        data: history,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to send message',
+        error: error instanceof Error ? error.message : 'Failed to fetch message',
       }
     }
   }
