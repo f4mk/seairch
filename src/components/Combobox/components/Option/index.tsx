@@ -9,8 +9,7 @@ import { Props } from './types'
 export const Option: Props = ({ option, isSelected, onSelect, onButtonClick }) => {
   return (
     <CommandItem
-      key={option.id}
-      value={option.label}
+      value={option.id}
       onSelect={() => onSelect(option)}
       className='flex items-center justify-between cursor-pointer'
     >

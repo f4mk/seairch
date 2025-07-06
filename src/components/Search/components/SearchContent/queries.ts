@@ -13,10 +13,11 @@ import { AIMessage, DialogItem, StreamMessage } from '@/lib/messaging/types'
 
 import { SearchResult } from './types'
 
-export const performSearch = async (query: string, dialogId: string): Promise<SearchResult> => {
+export const performSearch = async (dialogId: string, query?: string): Promise<SearchResult> => {
   try {
     const message: AIMessage | undefined = query ? { role: 'user', content: query } : undefined
     const response = await sendAIMessage({ message, dialogId })
+
     return {
       messages: response.messages,
       dialog: response.dialog,
@@ -29,14 +30,10 @@ export const performSearch = async (query: string, dialogId: string): Promise<Se
 }
 
 export const useSearchQuery = (
-  query: string,
-  dialogId: string,
-  options?: Partial<UseQueryOptions<SearchResult, Error>>,
+  options?: Partial<UseMutationOptions<SearchResult, Error, { query?: string; dialogId: string }>>,
 ) => {
-  return useQuery({
-    queryKey: ['search', query],
-    queryFn: () => performSearch(query, dialogId),
-    enabled: false,
+  return useMutation({
+    mutationFn: ({ query, dialogId }) => performSearch(dialogId, query),
     ...options,
   })
 }

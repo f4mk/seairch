@@ -6,7 +6,7 @@ export type Props = FC<{
   searchPlaceholder: string
   emptyPlaceholder: string
   options: OptionType[]
-  key?: string
+  selectedKey?: string
   onSelect: (option: OptionType) => void
   onButtonClick?: (option: OptionType) => void
   open: boolean

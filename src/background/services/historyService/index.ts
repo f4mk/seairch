@@ -40,15 +40,27 @@ export class HistoryService {
   /**
    * Get the history for a dialog
    */
-  async getHistory(dialogId: string): Promise<HistoryItem | undefined>
-  async getHistory(dialogId: string, defaultHistory: HistoryItem): Promise<HistoryItem>
-  async getHistory(
+  private async getHistory(dialogId: string): Promise<HistoryItem | undefined>
+  private async getHistory(dialogId: string, defaultHistory: HistoryItem): Promise<HistoryItem>
+  private async getHistory(
     dialogId: string,
     defaultHistory?: HistoryItem,
   ): Promise<HistoryItem | undefined> {
     const history = await this.historyClient.getHistory(dialogId)
 
     return history || defaultHistory
+  }
+
+  async getUserHistory(dialogId: string): Promise<HistoryItem> {
+    const history = await this.getHistory(dialogId)
+    if (!history) {
+      throw new Error(`History not found for dialog ${dialogId}`)
+    }
+    return {
+      // NOTE: Exclude system message
+      messages: history.messages.slice(1),
+      dialog: history.dialog,
+    }
   }
 
   /**

@@ -35,7 +35,9 @@ export const Combobox: Props = ({
     [onChange],
   )
 
-  const selectedOption = options.find((option) => option.id === selectedKey)
+  const selectedOption = selectedKey
+    ? options.find((option) => option.id === selectedKey)
+    : options[0]
 
   return (
     <div className='relative z-10'>
@@ -50,7 +52,7 @@ export const Combobox: Props = ({
           searchPlaceholder={searchPlaceholder}
           emptyPlaceholder={emptyPlaceholder}
           options={options}
-          key={selectedOption?.id}
+          selectedKey={selectedOption?.id}
           open={open}
           onSelect={handleSelect}
           onButtonClick={onButtonClick}

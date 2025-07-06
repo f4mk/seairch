@@ -11,7 +11,7 @@ import { Props } from './types'
 export const Content: Props = ({
   searchPlaceholder,
   emptyPlaceholder,
-  key,
+  selectedKey,
   options,
   onButtonClick,
   onSelect,
@@ -67,7 +67,7 @@ export const Content: Props = ({
             <Option
               key={option.id}
               option={option}
-              isSelected={key === option.id}
+              isSelected={selectedKey === option.id}
               onSelect={handleSelect}
               onButtonClick={onButtonClick}
             />

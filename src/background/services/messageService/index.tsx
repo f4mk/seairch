@@ -190,7 +190,7 @@ export class MessageService {
       }
 
       if (!payload.message) {
-        const history = await this.historyService.getHistory(payload.dialogId)
+        const history = await this.historyService.getUserHistory(payload.dialogId)
         if (!history) {
           return {
             success: false,
