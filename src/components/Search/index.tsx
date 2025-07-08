@@ -43,12 +43,12 @@ export const Search: Props = ({ onClose, initialQuery = '' }) => {
     >
       <Card
         className={cn(
-          'pt-0 pb-0 h-full flex flex-col resize overflow-auto min-h-96 min-w-96 max-w-screen max-h-screen gap-0 search-modal',
+          'search-modal flex h-full max-h-screen min-h-96 max-w-screen min-w-96 resize flex-col gap-0 overflow-auto pt-0 pb-0',
         )}
         data-state={isClosing ? 'closed' : 'open'}
         style={{ width: dimensions.width || undefined, height: dimensions.height || undefined }}
       >
-        <div onMouseDown={onMouseDown} className='cursor-move relative z-10'>
+        <div onMouseDown={onMouseDown} className='relative z-10 cursor-move'>
           <SearchHeader onClose={handleClose} />
         </div>
         <SearchContent initialQuery={initialQuery} />

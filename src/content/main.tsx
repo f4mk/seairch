@@ -17,7 +17,6 @@ host.id = ID_HOST
 host.style.zIndex = Z_INDEX_MODAL.toString()
 
 const shadow = host.attachShadow({ mode: 'open' })
-
 const style = document.createElement('style')
 style.textContent = tailwind
 shadow.appendChild(style)
