@@ -18,7 +18,7 @@ export const MessageBubble: Props = ({ message }) => {
         {message.role === 'user' ? (
           <div className='text-sm break-words'>{message.content}</div>
         ) : (
-          <div className='text-sm'>
+          <div className='text-sm break-words break-all'>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}

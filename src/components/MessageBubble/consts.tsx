@@ -11,7 +11,7 @@ export const components: Components = {
   ),
   code({ children }) {
     return (
-      <pre className='bg-muted text-foreground overflow-auto rounded p-3 text-xs'>
+      <pre className='overflow-auto rounded bg-muted p-3 text-xs text-foreground'>
         <code className='min-w-0 overflow-hidden break-all whitespace-pre-wrap'>{children}</code>
       </pre>
     )

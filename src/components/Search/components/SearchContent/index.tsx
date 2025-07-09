@@ -25,25 +25,37 @@ export const SearchContent: Props = ({ initialQuery }) => {
   const [dialog, setDialog] = useState<DialogItem>(() => getDefaultDialog(NEW_DIALOG_ID))
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const { data: dialogs, isFetching: isDialogsLoading, refetch: refetchDialogs } = useDialogsQuery()
   const {
     data,
     error,
     isPending: isLoading,
     mutate: fetchMessages,
+    reset: resetSearchQuery,
   } = useSearchQuery({
     onSuccess: (data) => {
       setDialog(data.dialog)
       setTimeout(() => textareaRef.current?.focus(), 0)
     },
+    onError: () => {
+      void refetchDialogs()
+    },
   })
 
-  const { mutate: requestStream, isPending: isStreaming } = useStreamingSearchQuery({
+  const {
+    mutate: requestStream,
+    isPending: isStreaming,
+    error: streamingError,
+    reset: resetStreamingQuery,
+  } = useStreamingSearchQuery({
     onSuccess: (data) => {
       setDialog(data.dialog)
       void refetchDialogs()
     },
+    onError: () => {
+      void refetchDialogs()
+    },
   })
-  const { data: dialogs, isFetching: isDialogsLoading, refetch: refetchDialogs } = useDialogsQuery()
   const { mutate: deleteDialog, isPending: isDeletingDialog } = useDeleteDialogQuery()
 
   useEffect(() => {
@@ -65,13 +77,16 @@ export const SearchContent: Props = ({ initialQuery }) => {
   }
 
   const handleDialogChange = useCallback(
-    (option: OptionType) => {
+    async (option: OptionType) => {
+      resetSearchQuery()
+      resetStreamingQuery()
+
       if (option.id !== NEW_DIALOG_ID) {
         void fetchMessages({ dialogId: option.id })
       }
       setDialog(option)
     },
-    [fetchMessages],
+    [fetchMessages, resetSearchQuery, resetStreamingQuery],
   )
 
   const handleDelete = (option: OptionType) => {
@@ -93,8 +108,10 @@ export const SearchContent: Props = ({ initialQuery }) => {
 
   let messages: AIMessage[] = []
 
-  if (error) {
-    messages = [{ role: 'assistant', content: `Error: ${error.message}` }]
+  if (error || streamingError) {
+    const errorMessage = error?.message || streamingError?.message || 'Unknown error occurred'
+    const formattedError = `**Error:** ${errorMessage}`
+    messages = [{ role: 'assistant', content: formattedError }]
   } else if (dialog.id === NEW_DIALOG_ID || data?.dialog?.id !== dialog.id) {
     messages = []
   } else {
@@ -124,7 +141,7 @@ export const SearchContent: Props = ({ initialQuery }) => {
         <DialogContent messages={messages} isStreaming={isStreaming} currentDialogId={dialog.id} />
       ) : (
         <div className='flex flex-1 items-center justify-center'>
-          <Search className='text-muted-foreground h-8 w-8 select-none' />
+          <Search className='h-8 w-8 text-muted-foreground select-none' />
         </div>
       )}
       <SearchControl
