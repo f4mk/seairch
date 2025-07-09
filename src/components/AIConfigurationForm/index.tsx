@@ -88,7 +88,7 @@ export const AIConfigurationForm = () => {
       <CardContent className='flex flex-1 flex-col'>
         <form onSubmit={handleSubmit} className='flex flex-1 flex-col space-y-4'>
           <div className='w-full space-y-2'>
-            <label htmlFor='apiKey' className='text-foreground text-sm font-medium'>
+            <label htmlFor='apiKey' className='text-sm font-medium text-foreground'>
               API Key
             </label>
             <Input
@@ -101,7 +101,7 @@ export const AIConfigurationForm = () => {
             />
           </div>
           <div className='w-full space-y-2'>
-            <label htmlFor='modelName' className='text-foreground text-sm font-medium'>
+            <label htmlFor='modelName' className='text-sm font-medium text-foreground'>
               Model Name
             </label>
             <Input
@@ -114,7 +114,7 @@ export const AIConfigurationForm = () => {
             />
           </div>
           <div className='w-full space-y-2'>
-            <label htmlFor='url' className='text-foreground text-sm font-medium'>
+            <label htmlFor='url' className='text-sm font-medium text-foreground'>
               Base URL
             </label>
             <Input
@@ -127,7 +127,7 @@ export const AIConfigurationForm = () => {
             />
           </div>
           <div className='w-full space-y-2'>
-            <label htmlFor='maxHistoryMessages' className='text-foreground text-sm font-medium'>
+            <label htmlFor='maxHistoryMessages' className='text-sm font-medium text-foreground'>
               Max History Messages
             </label>
             <Input
@@ -158,7 +158,7 @@ export const AIConfigurationForm = () => {
             className={cn(
               'mt-4 rounded-md p-3 text-sm',
               message.includes('Error')
-                ? 'bg-destructive/15 text-destructive border-destructive/20 border'
+                ? 'border border-destructive/20 bg-destructive/15 text-destructive'
                 : 'border border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-400',
             )}
           >

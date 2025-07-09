@@ -92,7 +92,7 @@ export const AppSettingsForm = () => {
               className='font-mono'
               maxLength={1}
             />
-            <p className='text-muted-foreground text-xs'>
+            <p className='text-xs text-muted-foreground'>
               Type a single letter to set the keyboard shortcut (Cmd/Ctrl + letter)
             </p>
           </div>
@@ -116,7 +116,7 @@ export const AppSettingsForm = () => {
             className={cn(
               'mt-4 rounded-md p-3 text-sm',
               message.includes('Error')
-                ? 'bg-destructive/15 text-destructive border-destructive/20 border'
+                ? 'border border-destructive/20 bg-destructive/15 text-destructive'
                 : 'border border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-400',
             )}
           >

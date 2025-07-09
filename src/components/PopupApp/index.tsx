@@ -6,24 +6,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 export const PopupApp = () => {
   return (
     <div className='relative h-screen w-96'>
-      <div className='bg-card text-card-foreground flex h-full w-96 flex-col self-center rounded-xl border shadow-sm'>
+      <div className='flex h-full w-96 flex-col self-center rounded-xl border bg-card text-card-foreground shadow-sm'>
         <Tabs defaultValue='ai-config' className='flex h-full flex-grow flex-col'>
-          <TabsList className='bg-muted/50 flex items-center self-center rounded-t-xl border-b p-0'>
+          <TabsList className='flex items-center self-center rounded-t-xl border-b bg-muted/50 p-0'>
             <TabsTrigger
               value='ai-config'
-              className='text-muted-foreground hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground flex-1 rounded-t-xl border-none bg-transparent py-3 transition-colors data-[state=active]:shadow-sm'
+              className='flex-1 rounded-t-xl border-none bg-transparent py-3 text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm'
             >
               AI Config
             </TabsTrigger>
             <TabsTrigger
               value='ai-settings'
-              className='text-muted-foreground hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground flex-1 rounded-t-xl border-none bg-transparent py-3 transition-colors data-[state=active]:shadow-sm'
+              className='flex-1 rounded-t-xl border-none bg-transparent py-3 text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm'
             >
               AI Settings
             </TabsTrigger>
             <TabsTrigger
               value='content-app'
-              className='text-muted-foreground hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground flex-1 rounded-t-xl border-none bg-transparent py-3 transition-colors data-[state=active]:shadow-sm'
+              className='flex-1 rounded-t-xl border-none bg-transparent py-3 text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm'
             >
               Content App
             </TabsTrigger>

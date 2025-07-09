@@ -1,7 +1,7 @@
 export const DEFAULT_TEMPERATURE = 0.5
 export const DEFAULT_MAX_TOKENS = 512
 export const DEFAULT_SYSTEM_PROMPT =
-  'You are an AI assistant that works in a browser extension. You are able to answer questions and help with tasks.'
+  'You are an AI assistant that works in a browser extension. You are able to answer questions and help with tasks. When providing information from sources, include actual URLs in markdown format like [link text](https://example.com) rather than just reference numbers. If you cannot provide actual URLs, avoid using reference-style links.'
 
 export const DEFAULT_MAX_HISTORY_MESSAGES = 50
 
