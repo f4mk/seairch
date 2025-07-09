@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { TrashIcon } from 'lucide-react'
+import { Search, TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
@@ -37,7 +37,7 @@ export const SearchContent: Props = ({ initialQuery }) => {
     },
   })
 
-  const { mutate: refetchStreaming, isPending: isStreaming } = useStreamingSearchQuery({
+  const { mutate: requestStream, isPending: isStreaming } = useStreamingSearchQuery({
     onSuccess: (data) => {
       setDialog(data.dialog)
       void refetchDialogs()
@@ -55,8 +55,10 @@ export const SearchContent: Props = ({ initialQuery }) => {
 
     if (dialog.id === NEW_DIALOG_ID) {
       const newDialogId = generateDialogId()
-      refetchStreaming({ dialogId: newDialogId, query: searchQuery })
+      requestStream({ dialogId: newDialogId, query: searchQuery })
       setDialog(getDefaultDialog(newDialogId))
+    } else {
+      requestStream({ dialogId: dialog.id, query: searchQuery })
     }
 
     setSearchQuery('')
@@ -103,26 +105,26 @@ export const SearchContent: Props = ({ initialQuery }) => {
     getDefaultDialog(NEW_DIALOG_ID),
     ...(dialogs?.map((d) => ({
       ...d,
-      iconButton: <TrashIcon className='w-4 h-4' />,
+      iconButton: <TrashIcon className='h-4 w-4' />,
     })) ?? []),
   ]
 
   return (
     <div
       className={cn(
-        'flex-1 pt-0 px-6 pb-4 flex h-full flex-col gap-4 overflow-hidden',
+        'flex h-full flex-1 flex-col gap-4 overflow-hidden px-6 pt-0 pb-4',
         messages.length ? 'justify-between' : 'justify-end',
       )}
     >
       {isLoading ? (
-        <div className='flex-1 flex items-center justify-center'>
+        <div className='flex flex-1 items-center justify-center'>
           <Spinner />
         </div>
       ) : messages.length > 0 || dialog.id !== NEW_DIALOG_ID ? (
         <DialogContent messages={messages} isStreaming={isStreaming} currentDialogId={dialog.id} />
       ) : (
-        <div className='flex-1 flex items-center justify-center'>
-          <p className='text-sm text-muted-foreground'>Search anything...</p>
+        <div className='flex flex-1 items-center justify-center'>
+          <Search className='text-muted-foreground h-8 w-8 select-none' />
         </div>
       )}
       <SearchControl

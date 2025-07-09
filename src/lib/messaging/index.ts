@@ -16,10 +16,10 @@ import type { AIMessage, DialogItem, MessageType, ResponseMessage } from './type
  * @param payload - Message payload
  * @returns Promise that resolves with the response
  */
-async function sendToBackground<T = unknown>(
+const sendToBackground = async <T = unknown>(
   type: MessageType,
   payload: Record<string, unknown> = {},
-): Promise<T> {
+): Promise<T> => {
   return new Promise<T>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
@@ -39,12 +39,12 @@ async function sendToBackground<T = unknown>(
   })
 }
 
-export async function initializeAI(
+export const initializeAI = async (
   apiKey: string,
   baseUrl: string,
   defaultModel: string,
   maxHistoryMessages: number,
-): Promise<{ message: string }> {
+): Promise<{ message: string }> => {
   return sendToBackground(MSG_INITIALIZE_AI, {
     apiKey,
     baseUrl,
@@ -56,33 +56,33 @@ export async function initializeAI(
 /**
  * Reset the AI service
  */
-export async function resetAI(): Promise<{ message: string }> {
+export const resetAI = async (): Promise<{ message: string }> => {
   return sendToBackground(MSG_RESET_AI, {})
 }
 
 /**
  * Update the AI service
  */
-export async function updateAI(payload: Record<string, unknown>): Promise<{ message: string }> {
+export const updateAI = async (payload: Record<string, unknown>): Promise<{ message: string }> => {
   return sendToBackground(MSG_UPDATE_AI, payload)
 }
 
 /**
  * Send a message to AI and get a complete response
  */
-export async function fetchAIMessage(params: {
+export const fetchAIMessage = async (params: {
   dialogId: string
-}): Promise<{ dialog: DialogItem; messages: AIMessage[] }> {
+}): Promise<{ dialog: DialogItem; messages: AIMessage[] }> => {
   return sendToBackground(MSG_FETCH_AI_MESSAGE, params)
 }
 
-export async function searchAIMessageStream({
+export const searchAIMessageStream = async ({
   dialogId,
   query,
 }: {
   dialogId: string
   query: string
-}): Promise<{ dialog: DialogItem }> {
+}): Promise<{ dialog: DialogItem }> => {
   return sendToBackground(MSG_SEARCH_AI_MESSAGE_STREAM, {
     dialogId,
     query,
@@ -92,13 +92,13 @@ export async function searchAIMessageStream({
 /**
  * Get the dialogs
  */
-export async function getDialogs(): Promise<{ dialogs: DialogItem[] }> {
+export const getDialogs = async (): Promise<{ dialogs: DialogItem[] }> => {
   return sendToBackground(MSG_GET_DIALOGS)
 }
 
 /**
  * Delete a dialog
  */
-export async function deleteDialog(dialogId: string): Promise<void> {
+export const deleteDialog = async (dialogId: string): Promise<void> => {
   return sendToBackground(MSG_DELETE_DIALOG, { dialogId })
 }

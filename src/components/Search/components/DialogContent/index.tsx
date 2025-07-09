@@ -11,11 +11,11 @@ export const DialogContent: Props = ({ messages, isStreaming, currentDialogId })
   const { scrollViewportRef, bottomRef } = useAutoScroll(currentDialogId)
 
   return (
-    <div className='w-full overflow-auto flex-1'>
+    <div className='w-full flex-1 overflow-auto'>
       <ScrollArea className='h-full w-full' ref={scrollViewportRef}>
         <div className='flex flex-col gap-4 p-4'>
           <StaticDialogMessages messages={messages} />
-          <StreamingDialogMessages dialogId={currentDialogId} isStreaming={!!isStreaming} />
+          <StreamingDialogMessages dialogId={currentDialogId} />
         </div>
         {isStreaming && (
           <div className='flex justify-center'>

@@ -50,14 +50,14 @@ export const AISettingsForm = () => {
   }
 
   return (
-    <Card>
+    <Card className='flex h-full w-full flex-col'>
       <CardHeader>
         <CardTitle>AI Settings</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleUpdate} className='space-y-4'>
+      <CardContent className='flex flex-1 flex-col'>
+        <form onSubmit={handleUpdate} className='flex flex-1 flex-col space-y-4'>
           <div className='space-y-2'>
-            <label htmlFor='updateSystemPrompt' className='text-sm font-medium text-foreground'>
+            <label htmlFor='updateSystemPrompt' className='text-foreground text-sm font-medium'>
               System Prompt
             </label>
             <Textarea
@@ -70,7 +70,7 @@ export const AISettingsForm = () => {
             />
           </div>
           <div className='space-y-2'>
-            <label htmlFor='maxTokens' className='text-sm font-medium text-foreground'>
+            <label htmlFor='maxTokens' className='text-foreground text-sm font-medium'>
               Max Tokens
             </label>
             <Input
@@ -84,7 +84,7 @@ export const AISettingsForm = () => {
             />
           </div>
           <div className='space-y-2'>
-            <label htmlFor='temperature' className='text-sm font-medium text-foreground'>
+            <label htmlFor='temperature' className='text-foreground text-sm font-medium'>
               Temperature
             </label>
             <Input
@@ -107,8 +107,8 @@ export const AISettingsForm = () => {
             className={cn(
               'mt-4 rounded-md p-3 text-sm',
               message.includes('Error')
-                ? 'bg-destructive/15 text-destructive border border-destructive/20'
-                : 'bg-green-50 text-green-800 border border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800',
+                ? 'bg-destructive/15 text-destructive border-destructive/20 border'
+                : 'border border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-400',
             )}
           >
             {message}

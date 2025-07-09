@@ -6,7 +6,7 @@ import { AIMessage } from '@/lib/messaging/types'
 
 import { Props } from './types'
 
-export const StreamingDialogMessages: Props = ({ dialogId, isStreaming }) => {
+export const StreamingDialogMessages: Props = ({ dialogId }) => {
   const { chunks, reset } = useStreamSubscription(dialogId)
   const [messages, setMessages] = useState<AIMessage[]>([])
   const [streamingContent, setStreamingContent] = useState('')
@@ -15,30 +15,23 @@ export const StreamingDialogMessages: Props = ({ dialogId, isStreaming }) => {
   const [_, startTransition] = useTransition()
 
   useEffect(() => {
-    if (isStreaming) {
-      reset()
-      setStreamingContent('')
-      lastIndexRef.current = -1
-    }
-  }, [isStreaming, reset])
-
-  useEffect(() => {
     if (chunks.length <= lastIndexRef.current + 1) return
 
     let updatedStreamingContent = streamingContent
     const newMessages: AIMessage[] = []
+    let shouldReset = false
 
     for (let i = lastIndexRef.current + 1; i < chunks.length; i++) {
       const chunk = chunks[i]
 
       if (chunk.role === 'user') {
-        newMessages.push({ role: 'user', content: chunk.content })
+        setMessages((prev) => [...prev, { role: 'user', content: chunk.content }])
       } else if (chunk.role === 'assistant') {
         if (chunk.isDone) {
           if (updatedStreamingContent.trim()) {
             newMessages.push({ role: 'assistant', content: updatedStreamingContent })
           }
-          updatedStreamingContent = ''
+          shouldReset = true
         } else {
           updatedStreamingContent += chunk.content
         }
@@ -47,19 +40,25 @@ export const StreamingDialogMessages: Props = ({ dialogId, isStreaming }) => {
       lastIndexRef.current = i
     }
 
-    setMessages((prev) => [...prev, ...newMessages])
-
     startTransition(() => {
       setStreamingContent(updatedStreamingContent)
     })
-  }, [chunks, streamingContent])
+
+    if (shouldReset) {
+      setMessages((prev) => [...prev, ...newMessages])
+      setStreamingContent('')
+      updatedStreamingContent = ''
+      lastIndexRef.current = -1
+      reset()
+    }
+  }, [chunks, streamingContent, reset])
 
   return (
     <>
       {messages.map((message, index) => (
         <MessageBubble key={`live-${index}`} message={message} />
       ))}
-      {isStreaming && streamingContent && (
+      {streamingContent && (
         <MessageBubble message={{ role: 'assistant', content: streamingContent }} />
       )}
     </>

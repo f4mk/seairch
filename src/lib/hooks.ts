@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-import { STORAGE_KEYS } from '@/components/AIConfigurationForm/consts'
 import { initializeAI } from '@/lib/messaging'
+import { getAIConfig } from '@/lib/storage/ai'
 
 export const useAutoInitAI = () => {
   useEffect(() => {
@@ -13,25 +13,22 @@ export const useAutoInitAI = () => {
     }) => {
       await initializeAI(args.apiKey, args.baseUrl, args.modelName, args.maxHistoryMessages)
     }
-    try {
-      chrome.storage.local.get(
-        [
-          STORAGE_KEYS.apiKey,
-          STORAGE_KEYS.modelName,
-          STORAGE_KEYS.baseUrl,
-          STORAGE_KEYS.maxHistoryMessages,
-        ],
-        async (res) => {
+    const loadAndInit = async () => {
+      try {
+        const config = await getAIConfig()
+        if (config.apiKey && config.baseUrl && config.modelName && config.maxHistoryMessages) {
           await initAI({
-            apiKey: res[STORAGE_KEYS.apiKey],
-            baseUrl: res[STORAGE_KEYS.baseUrl],
-            modelName: res[STORAGE_KEYS.modelName],
-            maxHistoryMessages: Number(res[STORAGE_KEYS.maxHistoryMessages]),
+            apiKey: config.apiKey,
+            baseUrl: config.baseUrl,
+            modelName: config.modelName,
+            maxHistoryMessages: config.maxHistoryMessages,
           })
-        },
-      )
-    } catch (error) {
-      console.error('Error accessing Chrome storage:', error)
+        }
+      } catch (error) {
+        console.error('Error loading AI config:', error)
+      }
     }
+
+    void loadAndInit()
   }, [])
 }

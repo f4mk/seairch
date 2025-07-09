@@ -9,9 +9,8 @@ import {
   MIN_MAX_HISTORY_MESSAGES,
 } from '@/consts/background'
 import { initializeAI, resetAI } from '@/lib/messaging'
+import { getAIConfig, setAIConfig } from '@/lib/storage/ai'
 import { cn } from '@/lib/utils'
-
-import { STORAGE_KEYS } from './consts'
 
 export const AIConfigurationForm = () => {
   const [apiKey, setApiKey] = useState('')
@@ -23,25 +22,19 @@ export const AIConfigurationForm = () => {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    try {
-      chrome.storage.local.get(
-        [
-          STORAGE_KEYS.apiKey,
-          STORAGE_KEYS.modelName,
-          STORAGE_KEYS.baseUrl,
-          STORAGE_KEYS.maxHistoryMessages,
-        ],
-        (res) => {
-          if (res[STORAGE_KEYS.apiKey]) setApiKey(res[STORAGE_KEYS.apiKey])
-          if (res[STORAGE_KEYS.modelName]) setModelName(res[STORAGE_KEYS.modelName])
-          if (res[STORAGE_KEYS.baseUrl]) setUrl(res[STORAGE_KEYS.baseUrl])
-          if (res[STORAGE_KEYS.maxHistoryMessages])
-            setMaxHistoryMessages(res[STORAGE_KEYS.maxHistoryMessages])
-        },
-      )
-    } catch (error) {
-      console.error('Error accessing Chrome storage:', error)
+    const loadConfig = async () => {
+      try {
+        const config = await getAIConfig()
+        if (config.apiKey) setApiKey(config.apiKey)
+        if (config.modelName) setModelName(config.modelName)
+        if (config.baseUrl) setUrl(config.baseUrl)
+        if (config.maxHistoryMessages) setMaxHistoryMessages(config.maxHistoryMessages)
+      } catch (error) {
+        console.error('Error loading AI config:', error)
+      }
     }
+
+    void loadConfig()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,14 +46,14 @@ export const AIConfigurationForm = () => {
       await initializeAI(apiKey, url, modelName, maxHistoryMessages)
 
       try {
-        await chrome.storage.local.set({
-          [STORAGE_KEYS.apiKey]: apiKey,
-          [STORAGE_KEYS.modelName]: modelName,
-          [STORAGE_KEYS.baseUrl]: url,
-          [STORAGE_KEYS.maxHistoryMessages]: maxHistoryMessages,
+        await setAIConfig({
+          apiKey,
+          modelName,
+          baseUrl: url,
+          maxHistoryMessages,
         })
       } catch (error) {
-        console.error('Error saving to Chrome storage:', error)
+        console.error('Error saving AI config:', error)
       }
 
       setMessage('AI service initialized successfully!')
@@ -88,14 +81,14 @@ export const AIConfigurationForm = () => {
   }
 
   return (
-    <Card>
+    <Card className='flex h-full w-full flex-col'>
       <CardHeader>
         <CardTitle>AI Configuration</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='space-y-2'>
-            <label htmlFor='apiKey' className='text-sm font-medium text-foreground'>
+      <CardContent className='flex flex-1 flex-col'>
+        <form onSubmit={handleSubmit} className='flex flex-1 flex-col space-y-4'>
+          <div className='w-full space-y-2'>
+            <label htmlFor='apiKey' className='text-foreground text-sm font-medium'>
               API Key
             </label>
             <Input
@@ -107,8 +100,8 @@ export const AIConfigurationForm = () => {
               required
             />
           </div>
-          <div className='space-y-2'>
-            <label htmlFor='modelName' className='text-sm font-medium text-foreground'>
+          <div className='w-full space-y-2'>
+            <label htmlFor='modelName' className='text-foreground text-sm font-medium'>
               Model Name
             </label>
             <Input
@@ -120,8 +113,8 @@ export const AIConfigurationForm = () => {
               required
             />
           </div>
-          <div className='space-y-2'>
-            <label htmlFor='url' className='text-sm font-medium text-foreground'>
+          <div className='w-full space-y-2'>
+            <label htmlFor='url' className='text-foreground text-sm font-medium'>
               Base URL
             </label>
             <Input
@@ -133,8 +126,8 @@ export const AIConfigurationForm = () => {
               required
             />
           </div>
-          <div className='space-y-2'>
-            <label htmlFor='maxHistoryMessages' className='text-sm font-medium text-foreground'>
+          <div className='w-full space-y-2'>
+            <label htmlFor='maxHistoryMessages' className='text-foreground text-sm font-medium'>
               Max History Messages
             </label>
             <Input
@@ -165,8 +158,8 @@ export const AIConfigurationForm = () => {
             className={cn(
               'mt-4 rounded-md p-3 text-sm',
               message.includes('Error')
-                ? 'bg-destructive/15 text-destructive border border-destructive/20'
-                : 'bg-green-50 text-green-800 border border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800',
+                ? 'bg-destructive/15 text-destructive border-destructive/20 border'
+                : 'border border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-400',
             )}
           >
             {message}

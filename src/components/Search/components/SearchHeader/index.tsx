@@ -7,8 +7,8 @@ import { Props } from './types'
 
 export const SearchHeader: Props = ({ onClose }) => {
   return (
-    <CardHeader className='pb-0 items-center pt-4'>
-      <CardTitle className='select-none text-lg'>Search</CardTitle>
+    <CardHeader className='items-center pt-4 pb-0'>
+      <CardTitle className='text-lg select-none'>Chat</CardTitle>
       <CardAction>
         <Button variant='ghost' size='sm' aria-label='Close search' onClick={onClose}>
           <X size={24} />

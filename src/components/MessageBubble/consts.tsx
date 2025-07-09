@@ -5,21 +5,21 @@ export const components: Components = {
   strong: ({ children }) => <strong className='break-all'>{children}</strong>,
   em: ({ children }) => <em className='break-all'>{children}</em>,
   a: ({ href, children }) => (
-    <a href={href} className='text-blue-500 break-all' target='_blank' rel='noreferrer'>
+    <a href={href} className='break-all text-blue-500' target='_blank' rel='noreferrer'>
       {children}
     </a>
   ),
   code({ children }) {
     return (
-      <pre className='bg-muted text-foreground p-3 rounded text-xs overflow-auto'>
-        <code className='whitespace-pre-wrap break-all min-w-0 overflow-hidden'>{children}</code>
+      <pre className='bg-muted text-foreground overflow-auto rounded p-3 text-xs'>
+        <code className='min-w-0 overflow-hidden break-all whitespace-pre-wrap'>{children}</code>
       </pre>
     )
   },
   table({ children }) {
     return (
       <div className='overflow-auto'>
-        <table className='table-auto w-full'>{children}</table>
+        <table className='w-full table-auto'>{children}</table>
       </div>
     )
   },

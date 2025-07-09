@@ -20,7 +20,7 @@ export const AutoScroll: Props = ({
 
     const el = scrollContainerRef.current
 
-    function onScroll() {
+    const onScroll = () => {
       const scrollFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
       if (scrollFromBottom > threshold) {
         setAutoScrollEnabled(false)

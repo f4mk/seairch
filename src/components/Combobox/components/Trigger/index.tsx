@@ -17,7 +17,7 @@ export const Trigger: Props = ({ label, placeholder, disabled, open }) => {
         className={cn(
           'w-full justify-between',
           !label && 'text-muted-foreground',
-          disabled && 'opacity-50 cursor-not-allowed',
+          disabled && 'cursor-not-allowed opacity-50',
         )}
         disabled={disabled}
         onMouseDown={(e) => e.stopPropagation()}

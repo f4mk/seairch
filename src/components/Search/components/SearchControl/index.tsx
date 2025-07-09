@@ -2,6 +2,7 @@ import { Send } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { KEY_ENTER } from '@/consts/keyboard'
 
 import { Props } from './types'
 
@@ -17,14 +18,14 @@ export const SearchControl: Props = ({
       <Textarea
         ref={ref}
         autoFocus
-        placeholder='Enter your search query...'
+        placeholder='Enter your query...'
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className='min-h-12 max-h-32 pr-10 resize-none break-all overflow-wrap-anywhere'
+        className='overflow-wrap-anywhere max-h-32 min-h-12 resize-none pr-10 break-all'
         rows={1}
         disabled={isLoading}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
+          if (e.key === KEY_ENTER && !e.shiftKey) {
             e.preventDefault()
             handleSearch()
           }
@@ -32,11 +33,11 @@ export const SearchControl: Props = ({
       />
       <Button
         onClick={handleSearch}
-        className='h-10 w-10 p-0 flex justify-center self-end'
+        className='flex h-10 w-10 justify-center self-end p-0'
         disabled={!searchQuery.trim() || isLoading}
         variant='secondary'
         tabIndex={0}
-        aria-label='Send search'
+        aria-label='Send query'
       >
         <Send className='size-5' />
       </Button>

@@ -11,13 +11,13 @@ export const Option: Props = ({ option, isSelected, onSelect, onButtonClick }) =
     <CommandItem
       value={option.id}
       onSelect={() => onSelect(option)}
-      className='flex items-center justify-between cursor-pointer'
+      className='flex cursor-pointer items-center justify-between'
     >
-      <div className='flex items-center gap-2 min-w-0 flex-1'>
+      <div className='flex min-w-0 flex-1 items-center gap-2'>
         <Check className={cn('h-4 w-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
         <span className='truncate'>{option.label}</span>
       </div>
-      <div className='shrink-0 w-6 h-6 flex items-center justify-center'>
+      <div className='flex h-6 w-6 shrink-0 items-center justify-center'>
         {option.iconButton ? (
           <Button
             variant='ghost'
@@ -26,13 +26,13 @@ export const Option: Props = ({ option, isSelected, onSelect, onButtonClick }) =
               e.stopPropagation()
               onButtonClick?.(option)
             }}
-            className='h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive cursor-pointer'
+            className='hover:bg-destructive/10 hover:text-destructive h-6 w-6 cursor-pointer p-0'
             aria-label={`Delete ${option.label}`}
           >
             {option.iconButton}
           </Button>
         ) : (
-          <div className='w-6 h-6' />
+          <div className='h-6 w-6' />
         )}
       </div>
     </CommandItem>

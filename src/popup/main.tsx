@@ -5,7 +5,10 @@ import { PopupApp } from '@/components/PopupApp'
 
 import './index.css'
 
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')!
+document.body.classList.add('dark')
+
+createRoot(root).render(
   <StrictMode>
     <PopupApp />
   </StrictMode>,

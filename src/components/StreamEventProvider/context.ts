@@ -8,6 +8,6 @@ type StreamCallbacks = {
 
 export type SubscribersMap = Map<string, StreamCallbacks>
 
-export const StreamEventsContext = React.createContext<{
-  subscribe: (dialogId: string, callbacks: StreamCallbacks) => () => void
-} | null>(null)
+export const StreamEventsContext = React.createContext<
+  ((dialogId: string, callbacks: StreamCallbacks) => () => void) | null
+>(null)

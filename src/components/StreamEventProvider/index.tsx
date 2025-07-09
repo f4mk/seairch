@@ -1,17 +1,12 @@
-import React, { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
 import { StreamMessage } from '@/lib/messaging/types'
 
 import { StreamEventsContext, SubscribersMap } from './context'
+import { Props, StreamCallbacks } from './types'
 
-type StreamChunkCallback = (chunk: string) => void
-
-type StreamCallbacks = {
-  onChunk: StreamChunkCallback
-}
-
-export const StreamEventsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const StreamEventsProvider: Props = ({ children }) => {
   const subscribers = useRef<SubscribersMap>(new Map())
 
   useEffect(() => {
@@ -36,15 +31,13 @@ export const StreamEventsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [])
 
-  const subscribe = (dialogId: string, callbacks: StreamCallbacks) => {
+  const subscribe = useCallback((dialogId: string, callbacks: StreamCallbacks) => {
     subscribers.current.set(dialogId, callbacks)
 
     return () => {
       subscribers.current.delete(dialogId)
     }
-  }
+  }, [])
 
-  return (
-    <StreamEventsContext.Provider value={{ subscribe }}>{children}</StreamEventsContext.Provider>
-  )
+  return <StreamEventsContext.Provider value={subscribe}>{children}</StreamEventsContext.Provider>
 }

@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react'
 
 export const Spinner = () => {
-  return <Loader2 className='w-4 h-4 animate-spin' />
+  return <Loader2 className='h-4 w-4 animate-spin' />
 }
