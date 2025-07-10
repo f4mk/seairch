@@ -4,8 +4,10 @@ import { Search, TrashIcon } from 'lucide-react'
 import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
 import { Spinner } from '@/components/Spinner'
+import { resetAI } from '@/lib/messaging'
 import { AIMessage, DialogItem } from '@/lib/messaging/types'
-import { cn, generateDialogId } from '@/lib/utils'
+import { getAIConfig } from '@/lib/storage/ai'
+import { cn, generateDialogId, initAIConfig } from '@/lib/utils'
 
 import { DialogContent } from '../DialogContent'
 import { SearchControl } from '../SearchControl'
@@ -20,9 +22,10 @@ import { getDefaultDialog } from './utils'
 
 const NEW_DIALOG_ID = '__NEW_DIALOG'
 
-export const SearchContent: Props = ({ initialQuery }) => {
+export const SearchContent: Props = ({ initialQuery, configNames }) => {
   const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [dialog, setDialog] = useState<DialogItem>(() => getDefaultDialog(NEW_DIALOG_ID))
+  const [configName, setConfigName] = useState(configNames[0])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const { data: dialogs, isFetching: isDialogsLoading, refetch: refetchDialogs } = useDialogsQuery()
@@ -106,6 +109,21 @@ export const SearchContent: Props = ({ initialQuery }) => {
     })
   }
 
+  const handleConfigChange = async (option: { id: string; label: string }) => {
+    try {
+      await resetAI()
+
+      setConfigName(option.id)
+
+      const config = await getAIConfig(option.id)
+      if (!config) return
+
+      void initAIConfig(config)
+    } catch (error) {
+      console.error('Error resetting AI service:', error)
+    }
+  }
+
   let messages: AIMessage[] = []
 
   if (error || streamingError) {
@@ -151,14 +169,27 @@ export const SearchContent: Props = ({ initialQuery }) => {
         handleSearch={handleSearch}
         isLoading={isLoading || isStreaming}
       />
-      <div className='w-[50%]'>
-        <Combobox
-          options={dialogOptions}
-          onChange={handleDialogChange}
-          onButtonClick={handleDelete}
-          disabled={isDialogsLoading || isDeletingDialog || isStreaming}
-          selectedKey={dialog.id}
-        />
+      <div className='flex gap-4'>
+        <div className='w-[20%]'>
+          <Combobox
+            options={configNames.map((name) => ({
+              id: name,
+              label: name,
+            }))}
+            onChange={handleConfigChange}
+            disabled={isDialogsLoading || isDeletingDialog || isStreaming}
+            selectedKey={configName}
+          />
+        </div>
+        <div className='w-[50%]'>
+          <Combobox
+            options={dialogOptions}
+            onChange={handleDialogChange}
+            onButtonClick={handleDelete}
+            disabled={isDialogsLoading || isDeletingDialog || isStreaming}
+            selectedKey={dialog.id}
+          />
+        </div>
       </div>
     </div>
   )

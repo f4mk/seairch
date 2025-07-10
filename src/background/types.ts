@@ -5,7 +5,6 @@ import {
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
   MSG_SEARCH_AI_MESSAGE_STREAM,
-  MSG_UPDATE_AI,
 } from '@/consts/messages'
 
 export type AIMessageType =
@@ -13,7 +12,6 @@ export type AIMessageType =
   | typeof MSG_FETCH_AI_MESSAGE
   | typeof MSG_SEARCH_AI_MESSAGE_STREAM
   | typeof MSG_RESET_AI
-  | typeof MSG_UPDATE_AI
 
 export type ContentMessage =
   | {
@@ -61,8 +59,8 @@ export type InitConfig = {
   apiKey: string
   baseUrl: string
   defaultModel: string
-  systemPrompt?: string
-  maxTokens?: number
-  temperature?: number
-  maxHistoryMessages?: number
+  systemPrompt: string
+  maxTokens: number
+  temperature: number
+  maxHistoryMessages: number
 }

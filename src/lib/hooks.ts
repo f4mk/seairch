@@ -1,28 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
-import { initializeAI } from '@/lib/messaging'
-import { getAIConfig } from '@/lib/storage/ai'
+import { getAIConfig, listAIConfigs } from '@/lib/storage/ai'
+
+import { initAIConfig } from './utils'
 
 export const useAutoInitAI = () => {
+  const [configNames, setConfigNames] = useState<string[]>([])
+
   useEffect(() => {
-    const initAI = async (args: {
-      apiKey: string
-      baseUrl: string
-      modelName: string
-      maxHistoryMessages: number
-    }) => {
-      await initializeAI(args.apiKey, args.baseUrl, args.modelName, args.maxHistoryMessages)
-    }
     const loadAndInit = async () => {
       try {
-        const config = await getAIConfig()
-        if (config.apiKey && config.baseUrl && config.modelName && config.maxHistoryMessages) {
-          await initAI({
-            apiKey: config.apiKey,
-            baseUrl: config.baseUrl,
-            modelName: config.modelName,
-            maxHistoryMessages: config.maxHistoryMessages,
-          })
+        const configNames = await listAIConfigs()
+        if (!configNames) throw new Error('No AI configs found')
+        setConfigNames(configNames)
+        const config = await getAIConfig(configNames[0])
+        if (config && Object.values(config).every(Boolean)) {
+          await initAIConfig(config)
         }
       } catch (error) {
         console.error('Error loading AI config:', error)
@@ -31,4 +24,6 @@ export const useAutoInitAI = () => {
 
     void loadAndInit()
   }, [])
+
+  return { configNames }
 }

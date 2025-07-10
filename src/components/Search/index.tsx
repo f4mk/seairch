@@ -12,7 +12,7 @@ import { SearchHeader } from './components/SearchHeader'
 import { THROTTLE_TIME } from './consts'
 import { Props } from './types'
 
-export const Search: Props = ({ onClose, initialQuery = '' }) => {
+export const Search: Props = ({ onClose, initialQuery = '', configNames }) => {
   const modalRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width?: number; height?: number }>({})
   const { isClosing, handleClose } = useExitAnimation({ onClose })
@@ -51,7 +51,7 @@ export const Search: Props = ({ onClose, initialQuery = '' }) => {
         <div onMouseDown={onMouseDown} className='relative z-10 cursor-move'>
           <SearchHeader onClose={handleClose} />
         </div>
-        <SearchContent initialQuery={initialQuery} />
+        <SearchContent initialQuery={initialQuery} configNames={configNames} />
       </Card>
     </div>
   )

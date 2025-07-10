@@ -1,7 +1,8 @@
 import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
 
 import { HistoryClient } from './clients/historyClient'
-import { createOpenAIClient, OpenAIConfig } from './clients/openaiClient'
+import { createOpenAIClient } from './clients/openaiClient'
+import { OpenAIConfig } from './clients/openaiClient/types'
 import { HistoryService } from './services/historyService'
 import { HistoryServiceExternalParams } from './services/historyService/types'
 import { MessageService } from './services/messageService'

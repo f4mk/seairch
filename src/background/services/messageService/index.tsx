@@ -1,23 +1,16 @@
 import OpenAI from 'openai'
 
 import {
-  DEFAULT_MAX_HISTORY_MESSAGES,
-  DEFAULT_MAX_TOKENS,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/consts/background'
-import {
   MSG_DELETE_DIALOG,
   MSG_FETCH_AI_MESSAGE,
   MSG_GET_DIALOGS,
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
   MSG_SEARCH_AI_MESSAGE_STREAM,
-  MSG_UPDATE_AI,
 } from '@/consts/messages'
 import { ChunkMessage } from '@/lib/messaging/types'
 
-import { OpenAIConfig } from '../../clients/openaiClient'
+import { OpenAIConfig } from '../../clients/openaiClient/types'
 import type { BackgroundResponse, ContentMessage, InitConfig } from '../../types'
 import { HistoryService } from '../historyService'
 import { HistoryServiceExternalParams } from '../historyService/types'
@@ -51,9 +44,6 @@ export class MessageService {
 
         case MSG_RESET_AI:
           return this.handleResetAI()
-
-        case MSG_UPDATE_AI:
-          return this.handleUpdateAI(payload)
 
         case MSG_FETCH_AI_MESSAGE:
           return this.handleFetchAIMessage(payload)
@@ -105,10 +95,10 @@ export class MessageService {
       this.historyService = this.createHistoryService({
         client,
         defaultModel,
-        systemPrompt: systemPrompt || DEFAULT_SYSTEM_PROMPT,
-        maxTokens: maxTokens || DEFAULT_MAX_TOKENS,
-        temperature: temperature || DEFAULT_TEMPERATURE,
-        maxHistoryMessages: maxHistoryMessages || DEFAULT_MAX_HISTORY_MESSAGES,
+        systemPrompt,
+        maxTokens,
+        temperature,
+        maxHistoryMessages,
       })
 
       return {
@@ -119,37 +109,6 @@ export class MessageService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to initialize service',
-      }
-    }
-  }
-
-  private async handleUpdateAI(payload: Record<string, unknown>): Promise<BackgroundResponse> {
-    if (!this.historyService) {
-      return {
-        success: false,
-        error: 'AI service not initialized. Please initialize the service first.',
-      }
-    }
-
-    try {
-      const systemPrompt = payload.systemPrompt as string
-      const maxTokens = payload.maxTokens as number
-      const temperature = payload.temperature as number
-
-      this.historyService.updateSettings({
-        systemPrompt,
-        maxTokens,
-        temperature,
-      })
-
-      return {
-        success: true,
-        data: { message: 'AI service updated successfully' },
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to update service',
       }
     }
   }

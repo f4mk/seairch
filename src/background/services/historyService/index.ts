@@ -68,7 +68,7 @@ export class HistoryService {
    */
   private async addMessage(dialogId: string, message: AIMessage): Promise<void> {
     const content = message.content
-    const label = content.length < 20 ? content : `${content.slice(0, 20)}...`
+    const label = content.length < 30 ? content : `${content.slice(0, 28)}...`
     const defaultHistory = {
       dialog: {
         id: dialogId,
@@ -130,17 +130,6 @@ export class HistoryService {
       messages: updatedHistory.messages.slice(1),
       dialog: updatedHistory.dialog,
     }
-  }
-
-  /**
-   * Update service settings
-   */
-  updateSettings(
-    config: Partial<Pick<HistoryServiceConfig, 'systemPrompt' | 'maxTokens' | 'temperature'>>,
-  ): void {
-    this.systemPrompt = config.systemPrompt || this.systemPrompt
-    this.maxTokens = config.maxTokens || this.maxTokens
-    this.temperature = config.temperature || this.temperature
   }
 
   /**

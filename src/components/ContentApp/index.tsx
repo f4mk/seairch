@@ -55,12 +55,18 @@ export const ContentApp = () => {
     }
   }, [show])
 
-  useAutoInitAI()
+  const { configNames } = useAutoInitAI()
 
   return (
     <QueryClientProvider client={queryClient}>
       <StreamEventsProvider>
-        {show && <Search onClose={() => setShow(false)} initialQuery={selectedText} />}
+        {show && (
+          <Search
+            onClose={() => setShow(false)}
+            initialQuery={selectedText}
+            configNames={configNames}
+          />
+        )}
       </StreamEventsProvider>
     </QueryClientProvider>
   )

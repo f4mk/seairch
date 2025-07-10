@@ -5,7 +5,6 @@ import {
   MSG_INITIALIZE_AI,
   MSG_RESET_AI,
   MSG_SEARCH_AI_MESSAGE_STREAM,
-  MSG_UPDATE_AI,
 } from '@/consts/messages'
 
 import type { AIMessage, DialogItem, MessageType, ResponseMessage } from './types'
@@ -44,12 +43,18 @@ export const initializeAI = async (
   baseUrl: string,
   defaultModel: string,
   maxHistoryMessages: number,
+  systemPrompt: string,
+  maxTokens: number,
+  temperature: number,
 ): Promise<{ message: string }> => {
   return sendToBackground(MSG_INITIALIZE_AI, {
     apiKey,
     baseUrl,
     defaultModel,
     maxHistoryMessages,
+    systemPrompt,
+    maxTokens,
+    temperature,
   })
 }
 
@@ -58,13 +63,6 @@ export const initializeAI = async (
  */
 export const resetAI = async (): Promise<{ message: string }> => {
   return sendToBackground(MSG_RESET_AI, {})
-}
-
-/**
- * Update the AI service
- */
-export const updateAI = async (payload: Record<string, unknown>): Promise<{ message: string }> => {
-  return sendToBackground(MSG_UPDATE_AI, payload)
 }
 
 /**
