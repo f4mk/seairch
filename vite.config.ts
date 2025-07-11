@@ -12,6 +12,7 @@ import manifest from './manifest.config.js'
 import { name, version } from './package.json'
 import { replaceRootWithHost } from './src/plugins/replaceRootWithHost'
 
+const isBuild = process.env.NODE_ENV === 'production'
 export default defineConfig({
   resolve: {
     alias: {
@@ -24,9 +25,9 @@ export default defineConfig({
     replaceRootWithHost(), 
     crx({ manifest }),
     zip({ outDir: 'release', outFileName: `crx-${name}-${version}.zip` }),
-    eslint({
+    !isBuild && eslint({
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['node_modules/**', 'dist/**'],
+      exclude: ['node_modules/**', 'dist/**', '@crx/**', '/@crx/**'],
       failOnError: false,
       failOnWarning: false,
     }),
