@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Search, TrashIcon } from 'lucide-react'
+import { TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
@@ -10,6 +10,7 @@ import { cn, generateDialogId } from '@/lib/utils'
 import { useSearchContext } from '../../hooks'
 import { DialogContent } from '../DialogContent'
 import { SearchControl } from '../SearchControl'
+import { SearchIcon } from '../SearchIcon'
 import {
   useDeleteDialogQuery,
   useDialogsQuery,
@@ -146,8 +147,8 @@ export const SearchContent: Props = ({ initialQuery }) => {
       ) : messages.length > 0 || dialog.id !== NEW_DIALOG_ID ? (
         <DialogContent messages={messages} isStreaming={isStreaming} currentDialogId={dialog.id} />
       ) : (
-        <div className='flex flex-1 items-center justify-center'>
-          <Search className='h-8 w-8 text-muted-foreground select-none' />
+        <div className='flex flex-1 items-center justify-center text-secondary-foreground'>
+          <SearchIcon className='text-muted-foreground select-none' />
         </div>
       )}
       <SearchControl

@@ -5,6 +5,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import zip from 'vite-plugin-zip-pack'
 import checker from 'vite-plugin-checker'
+// @ts-ignore
 import eslint from 'vite-plugin-eslint'
 
 import manifest from './manifest.config.js'

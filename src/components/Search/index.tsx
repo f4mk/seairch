@@ -61,7 +61,7 @@ export const Search: Props = ({ onClose, initialQuery = '', configNames, initial
             <SearchContent initialQuery={initialQuery} />
           ) : (
             <div className='flex flex-1 items-center justify-center p-4'>
-              <p className='text-center text-muted-foreground'>
+              <p className='text-center break-words text-muted-foreground'>
                 No AI configurations found. Please add some configurations first.
               </p>
             </div>
