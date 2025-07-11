@@ -2,18 +2,26 @@ import { useEffect, useState } from 'react'
 
 import { getAIConfig, listAIConfigs } from '@/lib/storage/ai'
 
-import { initAIConfig } from './utils'
+import { initAIConfig, last } from './utils'
 
 export const useAutoInitAI = () => {
   const [configNames, setConfigNames] = useState<string[]>([])
+  const [selectedConfigName, setSelectedConfigName] = useState<string>('')
 
   useEffect(() => {
     const loadAndInit = async () => {
       try {
         const configNames = await listAIConfigs()
+
         if (!configNames) throw new Error('No AI configs found')
         setConfigNames(configNames)
-        const config = await getAIConfig(configNames[0])
+
+        const lastConfigName = last(configNames)
+
+        if (lastConfigName) {
+          setSelectedConfigName(lastConfigName)
+        }
+        const config = await getAIConfig(lastConfigName)
         if (config && Object.values(config).every(Boolean)) {
           await initAIConfig(config)
         }
@@ -25,5 +33,5 @@ export const useAutoInitAI = () => {
     void loadAndInit()
   }, [])
 
-  return { configNames }
+  return { configNames, selectedConfigName }
 }

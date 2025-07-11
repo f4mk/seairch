@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils'
 import { SearchContent } from './components/SearchContent'
 import { SearchHeader } from './components/SearchHeader'
 import { THROTTLE_TIME } from './consts'
+import { SearchProvider } from './context'
 import { Props } from './types'
 
-export const Search: Props = ({ onClose, initialQuery = '', configNames }) => {
+export const Search: Props = ({ onClose, initialQuery = '', configNames, initialConfigName }) => {
   const modalRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width?: number; height?: number }>({})
   const { isClosing, handleClose } = useExitAnimation({ onClose })
@@ -48,10 +49,24 @@ export const Search: Props = ({ onClose, initialQuery = '', configNames }) => {
         data-state={isClosing ? 'closed' : 'open'}
         style={{ width: dimensions.width || undefined, height: dimensions.height || undefined }}
       >
-        <div onMouseDown={onMouseDown} className='relative z-10 cursor-move'>
-          <SearchHeader onClose={handleClose} />
-        </div>
-        <SearchContent initialQuery={initialQuery} configNames={configNames} />
+        <SearchProvider>
+          <div onMouseDown={onMouseDown} className='cursor-move'>
+            <SearchHeader
+              onClose={handleClose}
+              configNames={configNames}
+              initialConfigName={initialConfigName}
+            />
+          </div>
+          {configNames.length ? (
+            <SearchContent initialQuery={initialQuery} />
+          ) : (
+            <div className='flex flex-1 items-center justify-center p-4'>
+              <p className='text-center text-muted-foreground'>
+                No AI configurations found. Please add some configurations first.
+              </p>
+            </div>
+          )}
+        </SearchProvider>
       </Card>
     </div>
   )

@@ -10,11 +10,14 @@ export const getAIConfig = async (name: string): Promise<AIConfig | null> => {
 export const setAIConfig = async (name: string, config: AIConfig): Promise<void> => {
   await setStorageItem(name, config)
 
-  const configList = (await listAIConfigs()) || []
-  if (!configList.includes(name)) {
-    configList.push(name)
-    await setStorageItem(CONFIG_LIST_KEY, configList)
-  }
+  await arrangeConfigNames(name)
+}
+
+export const arrangeConfigNames = async (name: string): Promise<void> => {
+  let configList = (await listAIConfigs()) || []
+  configList = configList.filter((configName) => configName !== name)
+  configList.push(name)
+  await setStorageItem(CONFIG_LIST_KEY, configList)
 }
 
 export const listAIConfigs = async (): Promise<string[] | null> => {

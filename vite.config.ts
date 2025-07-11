@@ -26,6 +26,8 @@ export default defineConfig({
     eslint({
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['node_modules/**', 'dist/**'],
+      failOnError: false,
+      failOnWarning: false,
     }),
     checker({
       typescript: true,

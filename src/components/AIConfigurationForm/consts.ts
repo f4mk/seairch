@@ -17,3 +17,5 @@ export const defaultFormState: AIConfig = {
   [STORAGE_KEYS.maxTokens]: String(DEFAULT_MAX_TOKENS),
   [STORAGE_KEYS.temperature]: String(DEFAULT_TEMPERATURE),
 }
+export const DEFAULT_OPTION_ID = 'new-config'
+export const DEFAULT_OPTION_LABEL = 'New Configuration'

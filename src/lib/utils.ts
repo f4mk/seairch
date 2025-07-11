@@ -9,6 +9,15 @@ import { AIConfig } from './storage/types'
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Get the last element in an array
+ * @param array The array to get the last element from
+ * @returns The last element of the array
+ */
+export const last = <T>(array: T[]): T => {
+  return array[array.length - 1]
+}
 export const applyDarkClass = (target: HTMLElement) => {
   const media = window.matchMedia('(prefers-color-scheme: dark)')
   try {
@@ -67,15 +76,12 @@ export const customFetch = async (
   input: string | URL | Request,
   init?: RequestInit,
 ): Promise<Response> => {
-  if (!init) {
-    init = {}
-  }
-
   const cleanHeaders = new Headers()
 
-  if (init.headers) {
+  if (init?.headers) {
     const originalHeaders = new Headers(init.headers)
     for (const [key, value] of originalHeaders.entries()) {
+      // NOTE: Some weird behavior by perplexity
       if (!key.toLowerCase().startsWith('x-stainless-')) {
         cleanHeaders.set(key, value)
       }

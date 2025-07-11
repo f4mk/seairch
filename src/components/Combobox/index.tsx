@@ -40,24 +40,22 @@ export const Combobox: Props = ({
     : options[0]
 
   return (
-    <div className='relative z-10'>
-      <Popover open={open} onOpenChange={handleOpenChange}>
-        <Trigger
-          label={selectedOption?.label}
-          placeholder={placeholder}
-          disabled={disabled}
-          open={open}
-        />
-        <Content
-          searchPlaceholder={searchPlaceholder}
-          emptyPlaceholder={emptyPlaceholder}
-          options={options}
-          selectedKey={selectedOption?.id}
-          open={open}
-          onSelect={handleSelect}
-          onButtonClick={onButtonClick}
-        />
-      </Popover>
-    </div>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <Trigger
+        label={selectedOption?.label}
+        placeholder={placeholder}
+        disabled={disabled}
+        open={open}
+      />
+      <Content
+        searchPlaceholder={searchPlaceholder}
+        emptyPlaceholder={emptyPlaceholder}
+        options={options}
+        selectedKey={selectedOption?.id}
+        open={open}
+        onSelect={handleSelect}
+        onButtonClick={onButtonClick}
+      />
+    </Popover>
   )
 }

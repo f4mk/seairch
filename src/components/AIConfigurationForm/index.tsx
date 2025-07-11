@@ -10,6 +10,7 @@ import {
   DEFAULT_MAX_HISTORY_MESSAGES,
   DEFAULT_MAX_TOKENS,
   DEFAULT_TEMPERATURE,
+  MAX_CONFIG_NAME_LENGTH,
   MAX_MAX_HISTORY_MESSAGES,
   MAX_MAX_TOKENS,
   MAX_TEMPERATURE,
@@ -20,9 +21,9 @@ import {
 import { resetAI } from '@/lib/messaging'
 import { deleteAIConfig, getAIConfig, listAIConfigs, setAIConfig } from '@/lib/storage/ai'
 import { AIConfig } from '@/lib/storage/types'
-import { cn, initAIConfig } from '@/lib/utils'
+import { cn, initAIConfig, last } from '@/lib/utils'
 
-import { defaultFormState } from './consts'
+import { DEFAULT_OPTION_ID, DEFAULT_OPTION_LABEL, defaultFormState } from './consts'
 
 export const AIConfigurationForm = () => {
   const [formData, setFormData] = useState(defaultFormState)
@@ -42,11 +43,12 @@ export const AIConfigurationForm = () => {
           }))
           setConfigOptions(options)
 
-          if (configs[0]) {
-            const config = await getAIConfig(configs[0])
+          const lastConfig = last(configs)
+          if (lastConfig) {
+            const config = await getAIConfig(lastConfig)
             if (config) {
               setFormData(config)
-              setSelectedOption(configs[0])
+              setSelectedOption(lastConfig)
             }
           }
         }
@@ -68,8 +70,14 @@ export const AIConfigurationForm = () => {
       return
     }
 
+    if (formData[STORAGE_KEYS.name].length > MAX_CONFIG_NAME_LENGTH) {
+      setMessage(`Error: Configuration name must be ${MAX_CONFIG_NAME_LENGTH} characters or less`)
+      setIsLoading(false)
+      return
+    }
+
     if (
-      selectedOption === 'new-config' &&
+      selectedOption === DEFAULT_OPTION_ID &&
       configOptions.some((option) => option.id === formData[STORAGE_KEYS.name])
     ) {
       setMessage(`Error: Configuration name "${formData[STORAGE_KEYS.name]}" already exists`)
@@ -109,7 +117,7 @@ export const AIConfigurationForm = () => {
 
   const handleConfigSelect = async (option: { id: string; label: string }) => {
     setSelectedOption(option.id)
-    if (option.id === 'new-config') {
+    if (option.id === DEFAULT_OPTION_ID) {
       setFormData(defaultFormState)
       setMessage('')
     } else {
@@ -133,11 +141,17 @@ export const AIConfigurationForm = () => {
 
     try {
       await deleteAIConfig(configName)
-
-      setConfigOptions((prev) => prev.filter((option) => option.id !== configName))
+      const updatedConfigs = await listAIConfigs()
+      if (updatedConfigs) {
+        const options = updatedConfigs.map((config) => ({
+          id: config,
+          label: config,
+        }))
+        setConfigOptions(options)
+      }
 
       setFormData(defaultFormState)
-      setSelectedOption('')
+      setSelectedOption(DEFAULT_OPTION_ID)
       setMessage(`Configuration "${configName}" deleted successfully`)
     } catch (error) {
       setMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -163,7 +177,7 @@ export const AIConfigurationForm = () => {
             options={[
               ...configOptions,
               ...(configOptions.length > 0
-                ? [{ id: 'new-config', label: '+ New Configuration' }]
+                ? [{ id: DEFAULT_OPTION_ID, label: DEFAULT_OPTION_LABEL }]
                 : []),
             ]}
             onChange={handleConfigSelect}
@@ -184,6 +198,7 @@ export const AIConfigurationForm = () => {
               value={formData[STORAGE_KEYS.name]}
               onChange={(e) => updateFormField(STORAGE_KEYS.name, e.target.value)}
               placeholder='Enter a config name'
+              maxLength={MAX_CONFIG_NAME_LENGTH}
               required
             />
           </div>

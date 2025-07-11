@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import { Search } from '@/components/Search'
+import { SearchWrapper } from '@/components/SearchWrapper'
 import { StreamEventsProvider } from '@/components/StreamEventProvider'
 import { ID_HOST } from '@/consts/host'
 import { KEY_ESCAPE } from '@/consts/keyboard'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
-import { useAutoInitAI } from '@/lib/hooks'
 import { matchesKeyboardShortcut } from '@/lib/keyboardShortcut'
 
 const queryClient = new QueryClient({
@@ -22,7 +21,6 @@ const queryClient = new QueryClient({
 
 export const ContentApp = () => {
   const [show, setShow] = useState(false)
-  const [selectedText, setSelectedText] = useState<string | undefined>(undefined)
   const hostRef = useRef<HTMLElement | null>(null)
   const { shortcut, isLoading } = useKeyboardShortcut()
 
@@ -36,7 +34,6 @@ export const ContentApp = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (matchesKeyboardShortcut(event, shortcut)) {
         event.preventDefault()
-        setSelectedText(window.getSelection()?.toString().trim())
         setShow((prev) => !prev)
       }
 
@@ -55,18 +52,10 @@ export const ContentApp = () => {
     }
   }, [show])
 
-  const { configNames } = useAutoInitAI()
-
   return (
     <QueryClientProvider client={queryClient}>
       <StreamEventsProvider>
-        {show && (
-          <Search
-            onClose={() => setShow(false)}
-            initialQuery={selectedText}
-            configNames={configNames}
-          />
-        )}
+        {show && <SearchWrapper onClose={() => setShow(false)} />}
       </StreamEventsProvider>
     </QueryClientProvider>
   )
