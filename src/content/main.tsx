@@ -26,12 +26,22 @@ applyDarkClass(mount)
 
 shadow.appendChild(mount)
 
-document.body.appendChild(host)
+const initializeApp = () => {
+  if (document.body) {
+    document.body.appendChild(host)
+    setupMessageListener()
+    createRoot(mount).render(
+      <StrictMode>
+        <ContentApp shadowRoot={shadow} />
+      </StrictMode>,
+    )
+  } else {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeApp)
+    } else {
+      setTimeout(initializeApp, 100)
+    }
+  }
+}
 
-setupMessageListener()
-
-createRoot(mount).render(
-  <StrictMode>
-    <ContentApp shadowRoot={shadow} />
-  </StrictMode>,
-)
+initializeApp()
