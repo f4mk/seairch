@@ -20,6 +20,7 @@ export default defineManifest({
     {
       js: ['src/content/main.tsx'],
       matches: ['https://*/*'],
+      run_at: 'document_start',
     },
   ],
   background: {

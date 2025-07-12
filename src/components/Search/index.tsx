@@ -34,13 +34,14 @@ export const Search: Props = ({ onClose, initialQuery = '', configNames, initial
   return (
     <div
       ref={setModalRef}
-      className='fixed'
+      className='fixed focus:ring-0 focus:ring-offset-0 focus:outline-none'
       style={{
         left: calculatedPosition.x,
         top: calculatedPosition.y,
         zIndex: Z_INDEX_MODAL,
         userSelect: isDragging ? 'none' : 'auto',
       }}
+      tabIndex={-1}
     >
       <Card
         className={cn(

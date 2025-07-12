@@ -1,28 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 
 import { SearchWrapper } from '@/components/SearchWrapper'
 import { StreamEventsProvider } from '@/components/StreamEventProvider'
 import { ID_HOST } from '@/consts/host'
 import { KEY_ESCAPE } from '@/consts/keyboard'
+import { useGlobalInputBlocker } from '@/hooks/useGlobalInputBlocker'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { matchesKeyboardShortcut } from '@/lib/keyboardShortcut'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 0,
-      refetchOnWindowFocus: false,
-      staleTime: 0,
-      gcTime: 0,
-    },
-  },
-})
+import { KeyboardEventProvider } from '../KeyboardEventProvider'
+import { queryClient } from './consts'
+import { Props } from './types'
 
-export const ContentApp = () => {
+export const ContentApp: Props = ({ shadowRoot }) => {
   const [show, setShow] = useState(false)
   const hostRef = useRef<HTMLElement | null>(null)
   const { shortcut, isLoading } = useKeyboardShortcut()
+
+  useGlobalInputBlocker(shadowRoot, shortcut)
 
   useEffect(() => {
     hostRef.current = document.getElementById(ID_HOST) as HTMLElement | null
@@ -53,10 +49,12 @@ export const ContentApp = () => {
   }, [show])
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <StreamEventsProvider>
-        {show && <SearchWrapper onClose={() => setShow(false)} />}
-      </StreamEventsProvider>
-    </QueryClientProvider>
+    <KeyboardEventProvider>
+      <QueryClientProvider client={queryClient}>
+        <StreamEventsProvider>
+          {show && <SearchWrapper onClose={() => setShow(false)} />}
+        </StreamEventsProvider>
+      </QueryClientProvider>
+    </KeyboardEventProvider>
   )
 }

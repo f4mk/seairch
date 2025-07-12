@@ -1,4 +1,5 @@
 import {
+  MSG_AI_STREAM_CHUNK,
   MSG_DELETE_DIALOG,
   MSG_FETCH_AI_MESSAGE,
   MSG_GET_DIALOGS,
@@ -7,7 +8,7 @@ import {
   MSG_SEARCH_AI_MESSAGE_STREAM,
 } from '@/consts/messages'
 
-import type { AIMessage, DialogItem, MessageType, ResponseMessage } from './types'
+import type { AIMessage, DialogItem, MessageType, ResponseMessage, StreamMessage } from './types'
 
 /**
  * Send a message to the background script and wait for a response
@@ -37,7 +38,9 @@ const sendToBackground = async <T = unknown>(
     )
   })
 }
-
+/**
+ * Initialize the AI service
+ */
 export const initializeAI = async (
   apiKey: string,
   baseUrl: string,
@@ -74,6 +77,9 @@ export const fetchAIMessage = async (params: {
   return sendToBackground(MSG_FETCH_AI_MESSAGE, params)
 }
 
+/**
+ * Initialize a new stream with a query
+ */
 export const searchAIMessageStream = async ({
   dialogId,
   query,
@@ -99,4 +105,14 @@ export const getDialogs = async (): Promise<{ dialogs: DialogItem[] }> => {
  */
 export const deleteDialog = async (dialogId: string): Promise<void> => {
   return sendToBackground(MSG_DELETE_DIALOG, { dialogId })
+}
+
+/**
+ * Setup Chrome runtime message listener for content script
+ * Listens for messages from background script and dispatches custom events
+ */
+export const setupMessageListener = (): void => {
+  chrome.runtime.onMessage.addListener((message) => {
+    document.dispatchEvent(new CustomEvent<StreamMessage>(MSG_AI_STREAM_CHUNK, { detail: message }))
+  })
 }

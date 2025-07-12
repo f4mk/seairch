@@ -3,85 +3,72 @@ import { TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
-import { Spinner } from '@/components/Spinner'
 import { AIMessage, DialogItem } from '@/lib/messaging/types'
 import { cn, generateDialogId } from '@/lib/utils'
 
-import { useSearchContext } from '../../hooks'
-import { DialogContent } from '../DialogContent'
+import { useStreamingContext } from '../../hooks'
+import { SearchContentWrapper } from '../SearchContentWrapper'
 import { SearchControl } from '../SearchControl'
-import { SearchIcon } from '../SearchIcon'
-import {
-  useDeleteDialogQuery,
-  useDialogsQuery,
-  useSearchQuery,
-  useStreamingSearchQuery,
-} from './queries'
+import { NEW_DIALOG_ID } from './consts'
+import { useData } from './queries'
 import { Props } from './types'
 import { getDefaultDialog } from './utils'
 
-const NEW_DIALOG_ID = '__NEW_DIALOG'
-
 export const SearchContent: Props = ({ initialQuery }) => {
-  const [searchQuery, setSearchQuery] = useState(initialQuery)
+  const { setIsStreaming } = useStreamingContext()
   const [dialog, setDialog] = useState<DialogItem>(() => getDefaultDialog(NEW_DIALOG_ID))
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { setIsStreaming } = useSearchContext()
+  const [searchQuery, setSearchQuery] = useState(initialQuery)
 
-  const { data: dialogs, isFetching: isDialogsLoading, refetch: refetchDialogs } = useDialogsQuery()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const queryRef = useRef(searchQuery)
+
+  queryRef.current = searchQuery
+
   const {
-    data,
-    error,
-    isPending: isLoading,
-    mutate: fetchMessages,
-    reset: resetSearchQuery,
-  } = useSearchQuery({
-    onSuccess: (data) => {
+    dialogsData,
+    isDialogsLoading,
+    isLoading,
+    searchQueryData,
+    searchQueryError,
+    fetchMessages,
+    resetSearchQuery,
+    resetStreamingQuery,
+    requestStream,
+    isStreaming,
+    streamingError,
+    deleteDialog,
+    isDeletingDialog,
+    refetchDialogs,
+  } = useData({
+    onSearchSuccess: (data) => {
       setDialog(data.dialog)
       setTimeout(() => textareaRef.current?.focus(), 0)
     },
-    onError: () => {
+    onSearchError: () => {
       void refetchDialogs()
     },
-  })
-
-  const {
-    mutate: requestStream,
-    isPending: isStreaming,
-    error: streamingError,
-    reset: resetStreamingQuery,
-  } = useStreamingSearchQuery({
-    onSuccess: (data) => {
+    onStreamingSuccess: (data) => {
       setDialog(data.dialog)
       void refetchDialogs()
     },
-    onError: () => {
+    onStreamingError: () => {
       void refetchDialogs()
     },
   })
-  const { mutate: deleteDialog, isPending: isDeletingDialog } = useDeleteDialogQuery()
 
-  useEffect(() => {
-    setIsStreaming(isStreaming)
-  }, [isStreaming, setIsStreaming])
-
-  useEffect(() => {
-    void refetchDialogs()
-  }, [refetchDialogs])
-
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return
+  const handleSearch = useCallback(() => {
+    if (!queryRef.current.trim()) return
 
     if (dialog.id === NEW_DIALOG_ID) {
       const newDialogId = generateDialogId()
-      requestStream({ dialogId: newDialogId, query: searchQuery })
+      requestStream({ dialogId: newDialogId, query: queryRef.current })
       setDialog(getDefaultDialog(newDialogId))
     } else {
-      requestStream({ dialogId: dialog.id, query: searchQuery })
+      requestStream({ dialogId: dialog.id, query: queryRef.current })
     }
 
     setSearchQuery('')
-  }
+  }, [dialog.id, requestStream, setDialog])
 
   const handleDialogChange = useCallback(
     async (option: OptionType) => {
@@ -96,38 +83,50 @@ export const SearchContent: Props = ({ initialQuery }) => {
     [fetchMessages, resetSearchQuery, resetStreamingQuery],
   )
 
-  const handleDelete = (option: OptionType) => {
-    deleteDialog(option.id, {
-      onSuccess: () => {
-        void refetchDialogs()
+  const handleDelete = useCallback(
+    (option: OptionType) => {
+      deleteDialog(option.id, {
+        onSuccess: () => {
+          void refetchDialogs()
 
-        const isDeletingCurrent = option.id === dialog.id
+          const isDeletingCurrent = option.id === dialog.id
 
-        if (isDeletingCurrent) {
-          const newDialog = getDefaultDialog(NEW_DIALOG_ID)
-          setDialog(newDialog)
-        } else if (dialog.id !== NEW_DIALOG_ID) {
-          void fetchMessages({ dialogId: dialog.id })
-        }
-      },
-    })
-  }
+          if (isDeletingCurrent) {
+            const newDialog = getDefaultDialog(NEW_DIALOG_ID)
+            setDialog(newDialog)
+          } else if (dialog.id !== NEW_DIALOG_ID) {
+            void fetchMessages({ dialogId: dialog.id })
+          }
+        },
+      })
+    },
+    [deleteDialog, dialog.id, fetchMessages, refetchDialogs],
+  )
+
+  useEffect(() => {
+    setIsStreaming(isStreaming)
+  }, [isStreaming, setIsStreaming])
+
+  useEffect(() => {
+    void refetchDialogs()
+  }, [refetchDialogs])
 
   let messages: AIMessage[] = []
 
-  if (error || streamingError) {
-    const errorMessage = error?.message || streamingError?.message || 'Unknown error occurred'
+  if (searchQueryError || streamingError) {
+    const errorMessage =
+      searchQueryError?.message || streamingError?.message || 'Unknown error occurred'
     const formattedError = `**Error:** ${errorMessage}`
     messages = [{ role: 'assistant', content: formattedError }]
-  } else if (dialog.id === NEW_DIALOG_ID || data?.dialog?.id !== dialog.id) {
+  } else if (dialog.id === NEW_DIALOG_ID || searchQueryData?.dialog?.id !== dialog.id) {
     messages = []
   } else {
-    messages = data?.messages || []
+    messages = searchQueryData?.messages || []
   }
 
   const dialogOptions = [
     getDefaultDialog(NEW_DIALOG_ID),
-    ...(dialogs?.map((d) => ({
+    ...(dialogsData?.map((d) => ({
       ...d,
       iconButton: <TrashIcon className='h-4 w-4' />,
     })) ?? []),
@@ -140,22 +139,17 @@ export const SearchContent: Props = ({ initialQuery }) => {
         messages.length ? 'justify-between' : 'justify-end',
       )}
     >
-      {isLoading ? (
-        <div className='flex flex-1 items-center justify-center'>
-          <Spinner />
-        </div>
-      ) : messages.length > 0 || dialog.id !== NEW_DIALOG_ID ? (
-        <DialogContent messages={messages} isStreaming={isStreaming} currentDialogId={dialog.id} />
-      ) : (
-        <div className='flex flex-1 items-center justify-center text-secondary-foreground'>
-          <SearchIcon className='text-muted-foreground select-none' />
-        </div>
-      )}
+      <SearchContentWrapper
+        isLoading={isLoading}
+        messages={messages}
+        dialogId={dialog.id}
+        isStreaming={isStreaming}
+      />
       <SearchControl
         ref={textareaRef}
         searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        handleSearch={handleSearch}
+        onSearchQueryChange={setSearchQuery}
+        onSearch={handleSearch}
         isLoading={isLoading || isStreaming}
       />
       <div className='w-[50%]'>

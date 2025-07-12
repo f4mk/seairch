@@ -6,3 +6,8 @@ export type Props = FC<{
   configNames: string[]
   initialConfigName: string
 }>
+
+export type StreamingContextType = {
+  isStreaming: boolean
+  setIsStreaming: (streaming: boolean) => void
+}

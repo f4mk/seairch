@@ -3,7 +3,7 @@ import { useMutation, UseMutationOptions, useQuery, UseQueryOptions } from '@tan
 import { deleteDialog, fetchAIMessage, getDialogs, searchAIMessageStream } from '@/lib/messaging'
 import { DialogItem } from '@/lib/messaging/types'
 
-import { SearchResult } from './types'
+import { SearchResult, UseRataArgs } from './types'
 
 export const performFetch = async (dialogId: string): Promise<SearchResult> => {
   try {
@@ -79,4 +79,55 @@ export const useDeleteDialogQuery = (
     mutationFn: (dialogId: string) => removeDialog(dialogId),
     ...options,
   })
+}
+
+export const useData = ({
+  onSearchSuccess,
+  onSearchError,
+  onStreamingSuccess,
+  onStreamingError,
+}: UseRataArgs) => {
+  const {
+    data: dialogsData,
+    isFetching: isDialogsLoading,
+    refetch: refetchDialogs,
+  } = useDialogsQuery()
+  const {
+    data: searchQueryData,
+    error: searchQueryError,
+    isPending: isLoading,
+    mutate: fetchMessages,
+    reset: resetSearchQuery,
+  } = useSearchQuery({
+    onSuccess: onSearchSuccess,
+    onError: onSearchError,
+  })
+
+  const {
+    mutate: requestStream,
+    isPending: isStreaming,
+    error: streamingError,
+    reset: resetStreamingQuery,
+  } = useStreamingSearchQuery({
+    onSuccess: onStreamingSuccess,
+    onError: onStreamingError,
+  })
+  const { mutate: deleteDialog, isPending: isDeletingDialog } = useDeleteDialogQuery()
+
+  return {
+    dialogsData,
+    isDialogsLoading,
+    searchQueryData,
+    searchQueryError,
+    isLoading,
+    fetchMessages,
+    resetSearchQuery,
+    requestStream,
+    isStreaming,
+    streamingError,
+    resetStreamingQuery,
+    deleteDialog,
+    isDeletingDialog,
+    refetchDialogs,
+  }
 }

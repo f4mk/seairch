@@ -3,9 +3,8 @@ import { createRoot } from 'react-dom/client'
 
 import { ContentApp } from '@/components/ContentApp'
 import { ID_HOST } from '@/consts/host'
-import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
 import { Z_INDEX_MODAL } from '@/consts/styles'
-import { StreamMessage } from '@/lib/messaging/types'
+import { setupMessageListener } from '@/lib/messaging'
 import { applyDarkClass } from '@/lib/utils'
 
 import tailwind from './index.css?inline'
@@ -29,12 +28,10 @@ shadow.appendChild(mount)
 
 document.body.appendChild(host)
 
-chrome.runtime.onMessage.addListener((message) => {
-  document.dispatchEvent(new CustomEvent<StreamMessage>(MSG_AI_STREAM_CHUNK, { detail: message }))
-})
+setupMessageListener()
 
 createRoot(mount).render(
   <StrictMode>
-    <ContentApp />
+    <ContentApp shadowRoot={shadow} />
   </StrictMode>,
 )

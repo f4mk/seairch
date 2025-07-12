@@ -8,12 +8,12 @@ import { resetAI } from '@/lib/messaging'
 import { arrangeConfigNames, getAIConfig } from '@/lib/storage/ai'
 import { initAIConfig } from '@/lib/utils'
 
-import { useSearchContext } from '../../hooks'
+import { useStreamingContext } from '../../hooks'
 import { Props } from './types'
 
 export const SearchHeader: Props = ({ configNames, initialConfigName, onClose }) => {
   const [configName, setConfigName] = useState(() => initialConfigName)
-  const { isStreaming } = useSearchContext()
+  const { isStreaming } = useStreamingContext()
 
   useEffect(() => {
     setConfigName(initialConfigName)
@@ -33,6 +33,7 @@ export const SearchHeader: Props = ({ configNames, initialConfigName, onClose })
       console.error('Error resetting AI service:', error)
     }
   }
+
   return (
     <CardHeader className='items-center pt-4 pb-0'>
       <CardTitle className='flex gap-2 text-lg select-none'>
