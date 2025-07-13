@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import { getAIConfig, listAIConfigs } from '@/lib/storage/ai'
+import { listAIConfigs } from '@/lib/storage/ai'
 
-import { initAIConfig, last } from './utils'
+import { last, loadAndInitConfig } from './utils'
 
 export const useAutoInitAI = () => {
   const [configNames, setConfigNames] = useState<string[]>([])
@@ -21,10 +21,7 @@ export const useAutoInitAI = () => {
         if (lastConfigName) {
           setSelectedConfigName(lastConfigName)
         }
-        const config = await getAIConfig(lastConfigName)
-        if (config && Object.values(config).every(Boolean)) {
-          await initAIConfig(config)
-        }
+        await loadAndInitConfig(lastConfigName)
       } catch (error) {
         console.error('Error loading AI config:', error)
       }

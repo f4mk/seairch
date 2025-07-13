@@ -4,6 +4,7 @@ import { twMerge } from 'tailwind-merge'
 import { STORAGE_KEYS } from '@/consts/ai'
 
 import { initializeAI } from './messaging'
+import { getAIConfig } from './storage/ai'
 import { AIConfig } from './storage/types'
 
 export const cn = (...inputs: ClassValue[]) => {
@@ -70,6 +71,14 @@ export const initAIConfig = async (config: AIConfig) => {
     Number(config[STORAGE_KEYS.maxTokens]),
     Number(config[STORAGE_KEYS.temperature]),
   )
+}
+
+export const loadAndInitConfig = async (configName: string) => {
+  const config = await getAIConfig(configName)
+  if (config && Object.values(config).every(Boolean)) {
+    return initAIConfig(config)
+  }
+  throw new Error('Cannot load AI configuration')
 }
 
 export const customFetch = async (

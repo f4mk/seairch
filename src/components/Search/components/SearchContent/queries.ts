@@ -2,6 +2,7 @@ import { useMutation, UseMutationOptions, useQuery, UseQueryOptions } from '@tan
 
 import { deleteDialog, fetchAIMessage, getDialogs, searchAIMessageStream } from '@/lib/messaging'
 import { DialogItem } from '@/lib/messaging/types'
+import { loadAndInitConfig } from '@/lib/utils'
 
 import { SearchResult, UseRataArgs } from './types'
 
@@ -52,6 +53,12 @@ export const useStreamingSearchQuery = (
   return useMutation({
     mutationFn: ({ dialogId, query }) => performStreamingSearch(dialogId, query),
     ...options,
+    onError: async (error, variables, context) => {
+      options?.onError?.(error, variables, context)
+      // NOTE: if chrome accidentially unloads the service worker, we need to reload the config
+      await loadAndInitConfig(variables.dialogId)
+    },
+    retry: 1,
   })
 }
 
