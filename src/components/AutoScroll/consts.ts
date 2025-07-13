@@ -1,2 +1,2 @@
-export const DEFAULT_THRESHOLD = 200
-export const THROTTLE_MS = 300
+export const DEFAULT_THRESHOLD = 150
+export const THROTTLE_MS = 400
