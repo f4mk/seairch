@@ -1,6 +1,12 @@
 import { useMutation, UseMutationOptions, useQuery, UseQueryOptions } from '@tanstack/react-query'
 
-import { deleteDialog, fetchAIMessage, getDialogs, searchAIMessageStream } from '@/lib/messaging'
+import {
+  deleteDialog,
+  fetchAIMessage,
+  getDialogs,
+  resetAI,
+  searchAIMessageStream,
+} from '@/lib/messaging'
 import { DialogItem } from '@/lib/messaging/types'
 import { loadAndInitConfig } from '@/lib/utils'
 
@@ -56,6 +62,7 @@ export const useStreamingSearchQuery = (
     onError: async (error, variables, context) => {
       options?.onError?.(error, variables, context)
       // NOTE: if chrome accidentially unloads the service worker, we need to reload the config
+      await resetAI()
       await loadAndInitConfig(variables.dialogId)
     },
     retry: 1,
