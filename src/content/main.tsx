@@ -45,3 +45,25 @@ const initializeApp = () => {
 }
 
 initializeApp()
+
+let port: chrome.runtime.Port | null = null
+
+function initKeepAlive() {
+  if (port) return
+
+  port = chrome.runtime.connect({ name: 'keepAlivePort' })
+
+  port.onDisconnect.addListener(() => {
+    port = null
+
+    setTimeout(initKeepAlive, 1000)
+  })
+
+  setInterval(() => {
+    if (port) {
+      port.postMessage({ type: 'ping' })
+    }
+  }, 25000)
+}
+
+initKeepAlive()

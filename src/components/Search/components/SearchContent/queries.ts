@@ -60,12 +60,11 @@ export const useStreamingSearchQuery = (
     mutationFn: ({ dialogId, query }) => performStreamingSearch(dialogId, query),
     ...options,
     onError: async (error, variables, context) => {
-      options?.onError?.(error, variables, context)
       // NOTE: if chrome accidentially unloads the service worker, we need to reload the config
       await resetAI()
       await loadAndInitConfig(variables.dialogId)
+      options?.onError?.(error, variables, context)
     },
-    retry: 1,
   })
 }
 
