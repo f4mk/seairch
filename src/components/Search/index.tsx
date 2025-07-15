@@ -20,19 +20,28 @@ export const Search: Props = ({ initialQuery = '', configNames, initialConfigNam
   const { isClosing, handleClose } = useExitAnimation({ onClose })
   const { position, isDragging, onMouseDown } = useDraggable(modalRef, THROTTLE_TIME)
 
-  const setModalRef = useCallback((element: HTMLDivElement | null) => {
-    modalRef.current = element
-    if (element) {
-      setDimensions({
-        width: element.clientWidth,
-        height: element.clientHeight,
-      })
-    }
-  }, [])
+  const setModalRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      modalRef.current = element
+      if (element && !isCollapsed) {
+        setDimensions({
+          width: element.clientWidth,
+          height: element.clientHeight,
+        })
+      }
+    },
+    [isCollapsed],
+  )
 
   const onCollapse = useCallback(() => {
+    if (!isCollapsed && modalRef.current) {
+      setDimensions({
+        width: modalRef.current.clientWidth,
+        height: modalRef.current.clientHeight,
+      })
+    }
     setIsCollapsed((prev) => !prev)
-  }, [])
+  }, [isCollapsed])
 
   const calculatedPosition = calculateModalPosition(position, dimensions)
 
