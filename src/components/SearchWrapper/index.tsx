@@ -1,8 +1,9 @@
 import { Suspense, useEffect, useState } from 'react'
 
 import { Search } from '@/components/Search'
-import { useAutoInitAI } from '@/lib/hooks'
+import { useAutoInitAI } from '@/hooks/useAutoInitAI'
 
+import { ErrorBoundary } from './ErrorBoundary'
 import { InnerProps, Props } from './types'
 
 const SearchContent: InnerProps = ({ onClose }) => {
@@ -25,8 +26,10 @@ const SearchContent: InnerProps = ({ onClose }) => {
 
 export const SearchWrapper: Props = ({ onClose }) => {
   return (
-    <Suspense>
-      <SearchContent onClose={onClose} />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={null}>
+        <SearchContent onClose={onClose} />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

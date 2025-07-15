@@ -11,3 +11,4 @@ export type StreamingContextType = {
   isStreaming: boolean
   setIsStreaming: (streaming: boolean) => void
 }
+export type UpdateDimensions = { width: number; height: number }

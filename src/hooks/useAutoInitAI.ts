@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { listAIConfigs } from '@/lib/storage/ai'
-
-import { last, loadAndInitConfig } from './utils'
+import { last, loadAndInitConfig } from '@/lib/utils'
 
 export const useAutoInitAI = () => {
   const [configNames, setConfigNames] = useState<string[]>([])

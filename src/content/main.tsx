@@ -45,8 +45,6 @@ const initializeApp = () => {
   }
 }
 
-initializeApp()
-
 let port: chrome.runtime.Port | null = null
 
 const initKeepAlive = () => {
@@ -67,4 +65,5 @@ const initKeepAlive = () => {
   }, 25000)
 }
 
+initializeApp()
 initKeepAlive()

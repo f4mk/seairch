@@ -238,4 +238,24 @@
     @apply data-[state=open]:animate-in data-[state=closed]:animate-out;
     @apply data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0;
   }
+  
+  .bg-primary *::selection {
+    background: var(--primary-foreground);
+    color: var(--primary);
+  }
+  
+  .bg-primary *::-moz-selection {
+    background: var(--primary-foreground);
+    color: var(--primary);
+  }
+  
+  .bg-muted *::selection {
+    background: var(--foreground);
+    color: var(--muted);
+  }
+  
+  .bg-muted *::-moz-selection {
+    background: var(--foreground);
+    color: var(--muted);
+  }
 }

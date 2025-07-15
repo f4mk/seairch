@@ -1,7 +1,11 @@
-import { useContext } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
+
+import { STORAGE_KEYS } from '@/consts/keyboard'
+import { HEIGHT_DEFAULT, WIDTH_DEFAULT } from '@/consts/visuals'
+import { getVisualSettings } from '@/lib/storage/visual'
 
 import { SearchContext } from './context'
-import { StreamingContextType } from './types'
+import { StreamingContextType, UpdateDimensions } from './types'
 
 export const useStreamingContext = (): StreamingContextType => {
   const context = useContext(SearchContext)
@@ -9,4 +13,44 @@ export const useStreamingContext = (): StreamingContextType => {
     throw new Error('useSearchContext must be used within a SearchProvider')
   }
   return context
+}
+
+export const useVisualSettings = () => {
+  const [dimensions, setDimensions] = useState<UpdateDimensions>({
+    width: WIDTH_DEFAULT,
+    height: HEIGHT_DEFAULT,
+  })
+
+  useEffect(() => {
+    const loadVisualSettings = async () => {
+      try {
+        const visualSettings = await getVisualSettings()
+        if (visualSettings) {
+          setDimensions({
+            width: visualSettings[STORAGE_KEYS.baseWidth],
+            height: visualSettings[STORAGE_KEYS.baseHeight],
+          })
+        } else {
+          setDimensions({
+            width: WIDTH_DEFAULT,
+            height: HEIGHT_DEFAULT,
+          })
+        }
+      } catch (error) {
+        console.error('Error loading visual settings:', error)
+        setDimensions({
+          width: WIDTH_DEFAULT,
+          height: HEIGHT_DEFAULT,
+        })
+      }
+    }
+
+    void loadVisualSettings()
+  }, [])
+
+  const updateDimensions = useCallback((newDimensions: UpdateDimensions) => {
+    setDimensions(newDimensions)
+  }, [])
+
+  return { dimensions, updateDimensions }
 }

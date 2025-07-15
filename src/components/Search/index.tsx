@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
 import { DEFAULT_ANIMATION_DURATION, Z_INDEX_MODAL } from '@/consts/styles'
+import { HEIGHT_MIN, WIDTH_MIN } from '@/consts/visuals'
 import { useDraggable } from '@/hooks/useDraggable'
 import { useExitAnimation } from '@/hooks/useExitAnimation'
 import { calculateModalPosition } from '@/lib/position'
@@ -11,37 +12,29 @@ import { SearchContent } from './components/SearchContent'
 import { SearchHeader } from './components/SearchHeader'
 import { THROTTLE_TIME } from './consts'
 import { SearchProvider } from './context'
+import { useVisualSettings } from './hooks'
 import { Props } from './types'
 
 export const Search: Props = ({ initialQuery = '', configNames, initialConfigName, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null)
-  const [dimensions, setDimensions] = useState<{ width?: number; height?: number }>({})
+  const { dimensions, updateDimensions } = useVisualSettings()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { isClosing, handleClose } = useExitAnimation({ onClose })
   const { position, isDragging, onMouseDown } = useDraggable(modalRef, THROTTLE_TIME)
 
-  const setModalRef = useCallback(
-    (element: HTMLDivElement | null) => {
-      modalRef.current = element
-      if (element && !isCollapsed) {
-        setDimensions({
-          width: element.clientWidth,
-          height: element.clientHeight,
-        })
-      }
-    },
-    [isCollapsed],
-  )
+  const setModalRef = useCallback((element: HTMLDivElement | null) => {
+    modalRef.current = element
+  }, [])
 
   const onCollapse = useCallback(() => {
     if (!isCollapsed && modalRef.current) {
-      setDimensions({
+      updateDimensions({
         width: modalRef.current.clientWidth,
         height: modalRef.current.clientHeight,
       })
     }
     setIsCollapsed((prev) => !prev)
-  }, [isCollapsed])
+  }, [isCollapsed, updateDimensions])
 
   const calculatedPosition = calculateModalPosition(position, dimensions)
 
@@ -62,12 +55,14 @@ export const Search: Props = ({ initialQuery = '', configNames, initialConfigNam
           'search-modal flex flex-col gap-0 overflow-hidden pt-0 pb-0',
           isCollapsed
             ? `h-auto w-48 transition-all duration-${DEFAULT_ANIMATION_DURATION} ease-in-out`
-            : 'h-full max-h-screen min-h-96 max-w-screen min-w-96 resize overflow-auto',
+            : 'h-full max-h-screen max-w-screen resize overflow-auto',
         )}
         data-state={isClosing ? 'closed' : 'open'}
         style={{
           width: isCollapsed ? undefined : dimensions.width,
           height: isCollapsed ? undefined : dimensions.height,
+          minWidth: isCollapsed ? undefined : WIDTH_MIN,
+          minHeight: isCollapsed ? undefined : HEIGHT_MIN,
         }}
       >
         <SearchProvider>
@@ -80,7 +75,7 @@ export const Search: Props = ({ initialQuery = '', configNames, initialConfigNam
               isCollapsed={isCollapsed}
             />
           </div>
-          <div className={cn('flex-1 overflow-hidden', isCollapsed ? 'hidden' : 'block')}>
+          <div className={cn('flex flex-1 overflow-hidden', isCollapsed ? 'hidden' : 'block')}>
             {configNames.length ? (
               <SearchContent initialQuery={initialQuery} />
             ) : (

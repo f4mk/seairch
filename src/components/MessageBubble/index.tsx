@@ -16,9 +16,9 @@ export const MessageBubble: Props = ({ message }) => {
     <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       <div className={bubbleStyle}>
         {message.role === 'user' ? (
-          <div className='text-sm break-words'>{message.content}</div>
+          <div className='break-words'>{message.content}</div>
         ) : (
-          <div className='text-sm break-words break-all'>
+          <div className='break-words break-all'>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}
