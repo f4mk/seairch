@@ -80,19 +80,17 @@ export const Search: Props = ({ initialQuery = '', configNames, initialConfigNam
               isCollapsed={isCollapsed}
             />
           </div>
-          {!isCollapsed && (
-            <>
-              {configNames.length ? (
-                <SearchContent initialQuery={initialQuery} />
-              ) : (
-                <div className='flex flex-1 items-center justify-center p-4'>
-                  <p className='text-center text-base break-words text-muted-foreground'>
-                    No AI configurations found. Please add some configurations first.
-                  </p>
-                </div>
-              )}
-            </>
-          )}
+          <div className={cn('flex-1 overflow-hidden', isCollapsed ? 'hidden' : 'block')}>
+            {configNames.length ? (
+              <SearchContent initialQuery={initialQuery} />
+            ) : (
+              <div className='flex flex-1 items-center justify-center p-4'>
+                <p className='text-center text-base break-words text-muted-foreground'>
+                  No AI configurations found. Please add some configurations first.
+                </p>
+              </div>
+            )}
+          </div>
         </SearchProvider>
       </Card>
     </div>
