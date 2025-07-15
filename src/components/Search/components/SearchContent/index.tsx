@@ -3,7 +3,8 @@ import { TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
-import { AIMessage, DialogItem } from '@/lib/messaging/types'
+import { KEYBOARD_SHORTCUT_DELAY } from '@/consts/keyboard'
+import { DialogItem } from '@/lib/messaging/types'
 import { cn, generateDialogId } from '@/lib/utils'
 
 import { useStreamingContext } from '../../hooks'
@@ -12,7 +13,7 @@ import { SearchControl } from '../SearchControl'
 import { NEW_DIALOG_ID } from './consts'
 import { useData } from './queries'
 import { Props } from './types'
-import { getDefaultDialog } from './utils'
+import { getDefaultDialog, getMessages } from './utils'
 
 export const SearchContent: Props = ({ initialQuery }) => {
   const { setIsStreaming } = useStreamingContext()
@@ -23,6 +24,12 @@ export const SearchContent: Props = ({ initialQuery }) => {
   const queryRef = useRef(searchQuery)
 
   queryRef.current = searchQuery
+
+  const handleFocus = useCallback(() => {
+    setTimeout(() => {
+      textareaRef.current?.focus()
+    }, KEYBOARD_SHORTCUT_DELAY)
+  }, [])
 
   const {
     dialogsData,
@@ -38,20 +45,23 @@ export const SearchContent: Props = ({ initialQuery }) => {
     streamingError,
     deleteDialog,
     isDeletingDialog,
+    deleteDialogError,
     refetchDialogs,
   } = useData({
-    onSearchSuccess: (data) => {
-      setDialog(data.dialog)
-      setTimeout(() => textareaRef.current?.focus(), 0)
-    },
+    onSearchSuccess: (data) => setDialog(data.dialog),
     onSearchError: () => {
       void refetchDialogs()
     },
     onStreamingSuccess: (data) => {
       setDialog(data.dialog)
       void refetchDialogs()
+      handleFocus()
     },
     onStreamingError: () => {
+      void refetchDialogs()
+      handleFocus()
+    },
+    onDeleteDialogError: () => {
       void refetchDialogs()
     },
   })
@@ -111,18 +121,11 @@ export const SearchContent: Props = ({ initialQuery }) => {
     void refetchDialogs()
   }, [refetchDialogs])
 
-  let messages: AIMessage[] = []
-
-  if (searchQueryError || streamingError) {
-    const errorMessage =
-      searchQueryError?.message || streamingError?.message || 'Unknown error occurred'
-    const formattedError = `**Error:** ${errorMessage}`
-    messages = [{ role: 'assistant', content: formattedError }]
-  } else if (dialog.id === NEW_DIALOG_ID || searchQueryData?.dialog?.id !== dialog.id) {
-    messages = []
-  } else {
-    messages = searchQueryData?.messages || []
-  }
+  const messages = getMessages(
+    dialog,
+    searchQueryData,
+    deleteDialogError || searchQueryError || streamingError,
+  )
 
   const dialogOptions = [
     getDefaultDialog(NEW_DIALOG_ID),

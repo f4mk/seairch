@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import { ContentApp } from '@/components/ContentApp'
 import { ID_HOST } from '@/consts/host'
+import { DEFAULT_INIT_DELAY } from '@/consts/keyboard'
 import { Z_INDEX_MODAL } from '@/consts/styles'
 import { setupMessageListener } from '@/lib/messaging'
 import { applyDarkClass } from '@/lib/utils'
@@ -39,7 +40,7 @@ const initializeApp = () => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeApp)
     } else {
-      setTimeout(initializeApp, 100)
+      setTimeout(initializeApp, DEFAULT_INIT_DELAY)
     }
   }
 }
@@ -48,7 +49,7 @@ initializeApp()
 
 let port: chrome.runtime.Port | null = null
 
-function initKeepAlive() {
+const initKeepAlive = () => {
   if (port) return
 
   port = chrome.runtime.connect({ name: 'keepAlivePort' })

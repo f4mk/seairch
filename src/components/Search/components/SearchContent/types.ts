@@ -17,4 +17,5 @@ export type UseRataArgs = {
   onSearchError: (error: Error) => void
   onStreamingSuccess: (data: StreamingResult) => void
   onStreamingError: (error: Error) => void
+  onDeleteDialogError: (error: Error) => void
 }

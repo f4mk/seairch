@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, X } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,13 @@ import { initAIConfig } from '@/lib/utils'
 import { useStreamingContext } from '../../hooks'
 import { Props } from './types'
 
-export const SearchHeader: Props = ({ configNames, initialConfigName, onClose }) => {
+export const SearchHeader: Props = ({
+  configNames,
+  initialConfigName,
+  isCollapsed,
+  onClose,
+  onCollapse,
+}) => {
   const [configName, setConfigName] = useState(() => initialConfigName)
   const { isStreaming } = useStreamingContext()
 
@@ -35,10 +41,10 @@ export const SearchHeader: Props = ({ configNames, initialConfigName, onClose })
   }
 
   return (
-    <CardHeader className='items-center pt-4 pb-0'>
-      <CardTitle className='flex gap-2 text-lg select-none'>
+    <CardHeader className='items-center gap-0 pt-4 pb-4'>
+      <CardTitle className='flex gap-0 text-lg select-none'>
         Chat
-        {!!configNames.length && (
+        {!!configNames.length && !isCollapsed && (
           <div className='mx-auto'>
             <Combobox
               options={configNames.map((name) => ({
@@ -53,6 +59,9 @@ export const SearchHeader: Props = ({ configNames, initialConfigName, onClose })
         )}
       </CardTitle>
       <CardAction>
+        <Button variant='ghost' size='sm' aria-label='Collapse search' onClick={onCollapse}>
+          {isCollapsed ? <ArrowUpRight size={24} /> : <ArrowDownLeft size={24} />}
+        </Button>
         <Button variant='ghost' size='sm' aria-label='Close search' onClick={onClose}>
           <X size={24} />
         </Button>

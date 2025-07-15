@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 
 import { Card } from '@/components/ui/card'
-import { Z_INDEX_MODAL } from '@/consts/styles'
+import { DEFAULT_ANIMATION_DURATION, Z_INDEX_MODAL } from '@/consts/styles'
 import { useDraggable } from '@/hooks/useDraggable'
 import { useExitAnimation } from '@/hooks/useExitAnimation'
 import { calculateModalPosition } from '@/lib/position'
@@ -13,9 +13,10 @@ import { THROTTLE_TIME } from './consts'
 import { SearchProvider } from './context'
 import { Props } from './types'
 
-export const Search: Props = ({ onClose, initialQuery = '', configNames, initialConfigName }) => {
+export const Search: Props = ({ initialQuery = '', configNames, initialConfigName, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width?: number; height?: number }>({})
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const { isClosing, handleClose } = useExitAnimation({ onClose })
   const { position, isDragging, onMouseDown } = useDraggable(modalRef, THROTTLE_TIME)
 
@@ -27,6 +28,10 @@ export const Search: Props = ({ onClose, initialQuery = '', configNames, initial
         height: element.clientHeight,
       })
     }
+  }, [])
+
+  const onCollapse = useCallback(() => {
+    setIsCollapsed((prev) => !prev)
   }, [])
 
   const calculatedPosition = calculateModalPosition(position, dimensions)
@@ -45,27 +50,39 @@ export const Search: Props = ({ onClose, initialQuery = '', configNames, initial
     >
       <Card
         className={cn(
-          'search-modal flex h-full max-h-screen min-h-96 max-w-screen min-w-96 resize flex-col gap-0 overflow-auto pt-0 pb-0',
+          'search-modal flex flex-col gap-0 overflow-hidden pt-0 pb-0',
+          isCollapsed
+            ? `h-auto w-48 transition-all duration-${DEFAULT_ANIMATION_DURATION} ease-in-out`
+            : 'h-full max-h-screen min-h-96 max-w-screen min-w-96 resize overflow-auto',
         )}
         data-state={isClosing ? 'closed' : 'open'}
-        style={{ width: dimensions.width || undefined, height: dimensions.height || undefined }}
+        style={{
+          width: isCollapsed ? undefined : dimensions.width,
+          height: isCollapsed ? undefined : dimensions.height,
+        }}
       >
         <SearchProvider>
           <div onMouseDown={onMouseDown} className='cursor-move'>
             <SearchHeader
+              onCollapse={onCollapse}
               onClose={handleClose}
               configNames={configNames}
               initialConfigName={initialConfigName}
+              isCollapsed={isCollapsed}
             />
           </div>
-          {configNames.length ? (
-            <SearchContent initialQuery={initialQuery} />
-          ) : (
-            <div className='flex flex-1 items-center justify-center p-4'>
-              <p className='text-center break-words text-muted-foreground'>
-                No AI configurations found. Please add some configurations first.
-              </p>
-            </div>
+          {!isCollapsed && (
+            <>
+              {configNames.length ? (
+                <SearchContent initialQuery={initialQuery} />
+              ) : (
+                <div className='flex flex-1 items-center justify-center p-4'>
+                  <p className='text-center text-base break-words text-muted-foreground'>
+                    No AI configurations found. Please add some configurations first.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </SearchProvider>
       </Card>

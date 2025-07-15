@@ -60,10 +60,10 @@ export const useStreamingSearchQuery = (
     mutationFn: ({ dialogId, query }) => performStreamingSearch(dialogId, query),
     ...options,
     onError: async (error, variables, context) => {
+      options?.onError?.(error, variables, context)
       // NOTE: if chrome accidentially unloads the service worker, we need to reload the config
       await resetAI()
       await loadAndInitConfig(variables.dialogId)
-      options?.onError?.(error, variables, context)
     },
   })
 }
@@ -82,7 +82,7 @@ export const useDialogsQuery = (options?: Partial<UseQueryOptions<DialogItem[], 
 }
 
 export const removeDialog = async (dialogId: string): Promise<void> => {
-  await deleteDialog(dialogId)
+  return deleteDialog(dialogId)
 }
 
 export const useDeleteDialogQuery = (
@@ -99,6 +99,7 @@ export const useData = ({
   onSearchError,
   onStreamingSuccess,
   onStreamingError,
+  onDeleteDialogError,
 }: UseRataArgs) => {
   const {
     data: dialogsData,
@@ -125,7 +126,13 @@ export const useData = ({
     onSuccess: onStreamingSuccess,
     onError: onStreamingError,
   })
-  const { mutate: deleteDialog, isPending: isDeletingDialog } = useDeleteDialogQuery()
+  const {
+    mutate: deleteDialog,
+    isPending: isDeletingDialog,
+    error: deleteDialogError,
+  } = useDeleteDialogQuery({
+    onError: onDeleteDialogError,
+  })
 
   return {
     dialogsData,
@@ -141,6 +148,7 @@ export const useData = ({
     resetStreamingQuery,
     deleteDialog,
     isDeletingDialog,
+    deleteDialogError,
     refetchDialogs,
   }
 }
