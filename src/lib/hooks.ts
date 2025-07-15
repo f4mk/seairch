@@ -7,6 +7,8 @@ import { last, loadAndInitConfig } from './utils'
 export const useAutoInitAI = () => {
   const [configNames, setConfigNames] = useState<string[]>([])
   const [selectedConfigName, setSelectedConfigName] = useState<string>('')
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [initPromise, setInitPromise] = useState<Promise<void> | null>(null)
 
   useEffect(() => {
     const loadAndInit = async () => {
@@ -22,13 +24,21 @@ export const useAutoInitAI = () => {
           setSelectedConfigName(lastConfigName)
         }
         await loadAndInitConfig(lastConfigName)
+        setIsInitialized(true)
       } catch (error) {
         console.error('Error loading AI config:', error)
+        // NOTE Still set to true to avoid infinite loading
+        setIsInitialized(true)
       }
     }
 
-    void loadAndInit()
+    const promise = loadAndInit()
+    setInitPromise(promise)
   }, [])
+
+  if (!isInitialized && initPromise) {
+    throw initPromise
+  }
 
   return { configNames, selectedConfigName }
 }

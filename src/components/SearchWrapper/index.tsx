@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 import { Search } from '@/components/Search'
 import { useAutoInitAI } from '@/lib/hooks'
 
-import { Props } from './types'
+import { InnerProps, Props } from './types'
 
-export const SearchWrapper: Props = ({ onClose }) => {
+const SearchContent: InnerProps = ({ onClose }) => {
   const [selectedText, setSelectedText] = useState<string | undefined>()
   const { configNames, selectedConfigName } = useAutoInitAI()
 
@@ -20,5 +20,13 @@ export const SearchWrapper: Props = ({ onClose }) => {
       configNames={configNames}
       initialConfigName={selectedConfigName}
     />
+  )
+}
+
+export const SearchWrapper: Props = ({ onClose }) => {
+  return (
+    <Suspense>
+      <SearchContent onClose={onClose} />
+    </Suspense>
   )
 }
