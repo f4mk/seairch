@@ -1,34 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { AutoScroll } from '@/components/AutoScroll'
 import { Spinner } from '@/components/Spinner'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { STORAGE_KEYS } from '@/consts/keyboard'
-import { FONT_SIZE_DEFAULT } from '@/consts/visuals'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
-import { useFontSize } from '@/hooks/useFontSize'
-import { getVisualSettings } from '@/lib/storage/visual'
 
 import { FontSizeControls } from './components/FontSizeControls'
 import { StaticDialogMessages } from './components/StaticDialogMessages'
 import { StreamingDialogMessages } from './components/StreamingDialogMessages'
+import { useFontSizeControl } from './hooks'
 import { Props } from './types'
 
 export const DialogContent: Props = ({ messages, isStreaming, currentDialogId }) => {
   const { scrollViewportRef, bottomRef } = useAutoScroll(currentDialogId)
   const [showControls, setShowControls] = useState(false)
-  const [storedFontSize, setStoredFontSize] = useState(FONT_SIZE_DEFAULT)
-  const { fontSize, increase, decrease, canIncrease, canDecrease } = useFontSize({
-    initialSize: storedFontSize,
-  })
-
-  useEffect(() => {
-    void getVisualSettings().then((settings) => {
-      if (settings?.[STORAGE_KEYS.baseFontSize]) {
-        setStoredFontSize(settings[STORAGE_KEYS.baseFontSize])
-      }
-    })
-  }, [])
+  const { fontSize, increase, decrease, canIncrease, canDecrease } = useFontSizeControl()
 
   return (
     <div

@@ -3,7 +3,6 @@ import { TrashIcon } from 'lucide-react'
 
 import { Combobox } from '@/components/Combobox'
 import { OptionType } from '@/components/Combobox/types'
-import { KEYBOARD_SHORTCUT_DELAY } from '@/consts/keyboard'
 import { DialogItem } from '@/lib/messaging/types'
 import { cn, generateDialogId } from '@/lib/utils'
 
@@ -11,6 +10,7 @@ import { useStreamingContext } from '../../hooks'
 import { SearchContentWrapper } from '../SearchContentWrapper'
 import { SearchControl } from '../SearchControl'
 import { NEW_DIALOG_ID } from './consts'
+import { useFocus } from './hooks'
 import { useDialogs, useMessages, useStreaming } from './queries'
 import { Props } from './types'
 import { getDefaultDialog, getMessages } from './utils'
@@ -19,17 +19,10 @@ export const SearchContent: Props = ({ initialQuery }) => {
   const { setIsStreaming } = useStreamingContext()
   const [dialog, setDialog] = useState<DialogItem>(() => getDefaultDialog(NEW_DIALOG_ID))
   const [searchQuery, setSearchQuery] = useState(initialQuery)
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const queryRef = useRef(searchQuery)
-
   queryRef.current = searchQuery
 
-  const handleFocus = useCallback(() => {
-    setTimeout(() => {
-      textareaRef.current?.focus()
-    }, KEYBOARD_SHORTCUT_DELAY)
-  }, [])
+  const { textareaRef, handleFocus } = useFocus()
 
   const {
     dialogsData,
