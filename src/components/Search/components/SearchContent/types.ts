@@ -12,10 +12,17 @@ export type SearchResult = {
 export type StreamingResult = {
   dialog: DialogItem
 }
-export type UseRataArgs = {
-  onSearchSuccess: (data: SearchResult) => void
-  onSearchError: (error: Error) => void
+
+export type UseDialogsArgs = {
+  onDeleteDialogError: (error: Error) => void
+}
+
+export type UseStreamingArgs = {
   onStreamingSuccess: (data: StreamingResult) => void
   onStreamingError: (error: Error) => void
-  onDeleteDialogError: (error: Error) => void
+}
+
+export type UseMessagesArgs = {
+  onSearchSuccess: (data: SearchResult) => void
+  onSearchError: (error: Error) => void
 }

@@ -10,7 +10,7 @@ import {
 import { DialogItem } from '@/lib/messaging/types'
 import { loadAndInitConfig } from '@/lib/utils'
 
-import { SearchResult, UseRataArgs } from './types'
+import { SearchResult, UseDialogsArgs, UseMessagesArgs, UseStreamingArgs } from './types'
 
 export const performFetch = async (dialogId: string): Promise<SearchResult> => {
   try {
@@ -94,38 +94,13 @@ export const useDeleteDialogQuery = (
   })
 }
 
-export const useData = ({
-  onSearchSuccess,
-  onSearchError,
-  onStreamingSuccess,
-  onStreamingError,
-  onDeleteDialogError,
-}: UseRataArgs) => {
+export const useDialogs = ({ onDeleteDialogError }: UseDialogsArgs) => {
   const {
     data: dialogsData,
     isFetching: isDialogsLoading,
     refetch: refetchDialogs,
   } = useDialogsQuery()
-  const {
-    data: searchQueryData,
-    error: searchQueryError,
-    isPending: isLoading,
-    mutate: fetchMessages,
-    reset: resetSearchQuery,
-  } = useSearchQuery({
-    onSuccess: onSearchSuccess,
-    onError: onSearchError,
-  })
 
-  const {
-    mutate: requestStream,
-    isPending: isStreaming,
-    error: streamingError,
-    reset: resetStreamingQuery,
-  } = useStreamingSearchQuery({
-    onSuccess: onStreamingSuccess,
-    onError: onStreamingError,
-  })
   const {
     mutate: deleteDialog,
     isPending: isDeletingDialog,
@@ -137,18 +112,49 @@ export const useData = ({
   return {
     dialogsData,
     isDialogsLoading,
+    deleteDialog,
+    isDeletingDialog,
+    deleteDialogError,
+    refetchDialogs,
+  }
+}
+
+export const useStreaming = ({ onStreamingSuccess, onStreamingError }: UseStreamingArgs) => {
+  const {
+    mutate: requestStream,
+    isPending: isStreaming,
+    error: streamingError,
+    reset: resetStreamingQuery,
+  } = useStreamingSearchQuery({
+    onSuccess: onStreamingSuccess,
+    onError: onStreamingError,
+  })
+
+  return {
+    requestStream,
+    isStreaming,
+    streamingError,
+    resetStreamingQuery,
+  }
+}
+
+export const useMessages = ({ onSearchSuccess, onSearchError }: UseMessagesArgs) => {
+  const {
+    data: searchQueryData,
+    error: searchQueryError,
+    isPending: isLoading,
+    mutate: fetchMessages,
+    reset: resetSearchQuery,
+  } = useSearchQuery({
+    onSuccess: onSearchSuccess,
+    onError: onSearchError,
+  })
+
+  return {
     searchQueryData,
     searchQueryError,
     isLoading,
     fetchMessages,
     resetSearchQuery,
-    requestStream,
-    isStreaming,
-    streamingError,
-    resetStreamingQuery,
-    deleteDialog,
-    isDeletingDialog,
-    deleteDialogError,
-    refetchDialogs,
   }
 }

@@ -11,7 +11,7 @@ import { useStreamingContext } from '../../hooks'
 import { SearchContentWrapper } from '../SearchContentWrapper'
 import { SearchControl } from '../SearchControl'
 import { NEW_DIALOG_ID } from './consts'
-import { useData } from './queries'
+import { useDialogs, useMessages, useStreaming } from './queries'
 import { Props } from './types'
 import { getDefaultDialog, getMessages } from './utils'
 
@@ -34,24 +34,25 @@ export const SearchContent: Props = ({ initialQuery }) => {
   const {
     dialogsData,
     isDialogsLoading,
-    isLoading,
-    searchQueryData,
-    searchQueryError,
-    fetchMessages,
-    resetSearchQuery,
-    resetStreamingQuery,
-    requestStream,
-    isStreaming,
-    streamingError,
     deleteDialog,
     isDeletingDialog,
     deleteDialogError,
     refetchDialogs,
-  } = useData({
-    onSearchSuccess: (data) => setDialog(data.dialog),
-    onSearchError: () => {
+  } = useDialogs({
+    onDeleteDialogError: () => {
       void refetchDialogs()
     },
+  })
+
+  const { searchQueryData, searchQueryError, isLoading, fetchMessages, resetSearchQuery } =
+    useMessages({
+      onSearchSuccess: (data) => setDialog(data.dialog),
+      onSearchError: () => {
+        void refetchDialogs()
+      },
+    })
+
+  const { requestStream, isStreaming, streamingError, resetStreamingQuery } = useStreaming({
     onStreamingSuccess: (data) => {
       setDialog(data.dialog)
       void refetchDialogs()
@@ -60,9 +61,6 @@ export const SearchContent: Props = ({ initialQuery }) => {
     onStreamingError: () => {
       void refetchDialogs()
       handleFocus()
-    },
-    onDeleteDialogError: () => {
-      void refetchDialogs()
     },
   })
 
