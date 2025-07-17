@@ -21,10 +21,6 @@ export const ContentApp: Props = ({ shadowRoot }) => {
   useGlobalInputBlocker(shadowRoot, shortcut)
 
   useEffect(() => {
-    hostRef.current = document.getElementById(ID_HOST) as HTMLElement | null
-  }, [])
-
-  useEffect(() => {
     if (isLoading || !shortcut) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -47,6 +43,10 @@ export const ContentApp: Props = ({ shadowRoot }) => {
       hostRef.current.style.pointerEvents = show ? 'auto' : 'none'
     }
   }, [show])
+
+  useEffect(() => {
+    hostRef.current = document.getElementById(ID_HOST) as HTMLElement | null
+  }, [])
 
   return (
     <KeyboardEventProvider>

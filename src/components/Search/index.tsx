@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { Card } from '@/components/ui/card'
 import { DEFAULT_ANIMATION_DURATION, Z_INDEX_MODAL } from '@/consts/styles'
@@ -12,13 +12,13 @@ import { SearchContent } from './components/SearchContent'
 import { SearchHeader } from './components/SearchHeader'
 import { THROTTLE_TIME } from './consts'
 import { SearchProvider } from './context'
-import { useVisualSettings } from './hooks'
+import { useCollapse, useLoadVisualSettings } from './hooks'
 import { Props } from './types'
 
 export const Search: Props = ({ initialQuery = '', configNames, initialConfigName, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null)
-  const { dimensions, updateDimensions } = useVisualSettings()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const { dimensions, updateDimensions } = useLoadVisualSettings()
+  const { isCollapsed, onCollapse } = useCollapse(updateDimensions)
   const { isClosing, handleClose } = useExitAnimation({ onClose })
   const { position, isDragging, onMouseDown } = useDraggable(modalRef, THROTTLE_TIME)
 
@@ -26,15 +26,9 @@ export const Search: Props = ({ initialQuery = '', configNames, initialConfigNam
     modalRef.current = element
   }, [])
 
-  const onCollapse = useCallback(() => {
-    if (!isCollapsed && modalRef.current) {
-      updateDimensions({
-        width: modalRef.current.clientWidth,
-        height: modalRef.current.clientHeight,
-      })
-    }
-    setIsCollapsed((prev) => !prev)
-  }, [isCollapsed, updateDimensions])
+  const handleCollapse = useCallback(() => {
+    onCollapse(modalRef.current)
+  }, [onCollapse])
 
   const calculatedPosition = calculateModalPosition(position, dimensions)
 
@@ -68,14 +62,14 @@ export const Search: Props = ({ initialQuery = '', configNames, initialConfigNam
         <SearchProvider>
           <div onMouseDown={onMouseDown} className='cursor-move'>
             <SearchHeader
-              onCollapse={onCollapse}
+              onCollapse={handleCollapse}
               onClose={handleClose}
               configNames={configNames}
               initialConfigName={initialConfigName}
               isCollapsed={isCollapsed}
             />
           </div>
-          <div className={cn('flex flex-1 overflow-hidden', isCollapsed ? 'hidden' : 'block')}>
+          <div className={cn('flex-1 overflow-hidden', isCollapsed ? 'hidden' : 'flex')}>
             {configNames.length ? (
               <SearchContent initialQuery={initialQuery} />
             ) : (

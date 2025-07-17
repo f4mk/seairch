@@ -2,68 +2,87 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { ContentApp } from '@/components/ContentApp'
-import { ID_HOST } from '@/consts/host'
-import { DEFAULT_INIT_DELAY } from '@/consts/keyboard'
-import { Z_INDEX_MODAL } from '@/consts/styles'
 import { setupMessageListener } from '@/lib/messaging'
-import { applyDarkClass } from '@/lib/utils'
 
 import tailwind from './index.css?inline'
+import { setupShadowDOM } from './utils'
 
-const host = document.createElement('div')
-host.style.position = 'fixed'
-host.style.pointerEvents = 'none'
-host.id = ID_HOST
-host.style.zIndex = Z_INDEX_MODAL.toString()
+let keepAlivePort: chrome.runtime.Port | null = null
+let pingInterval: NodeJS.Timeout | null = null
+let reconnectTimeout: NodeJS.Timeout | null = null
 
-const shadow = host.attachShadow({ mode: 'open' })
-const style = document.createElement('style')
-style.textContent = tailwind
-shadow.appendChild(style)
+const waitForDocumentReady = async (): Promise<void> => {
+  if (document.body) return
 
-const mount = document.createElement('div')
-
-applyDarkClass(mount)
-
-shadow.appendChild(mount)
-
-const initializeApp = () => {
-  if (document.body) {
-    document.body.appendChild(host)
-    setupMessageListener()
-    createRoot(mount).render(
-      <StrictMode>
-        <ContentApp shadowRoot={shadow} />
-      </StrictMode>,
-    )
-  } else {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeApp)
-    } else {
-      setTimeout(initializeApp, DEFAULT_INIT_DELAY)
-    }
-  }
+  await new Promise<void>((resolve) => {
+    document.addEventListener('DOMContentLoaded', () => resolve())
+  })
 }
 
-let port: chrome.runtime.Port | null = null
+const setupKeepAlive = (): void => {
+  if (keepAlivePort) return
 
-const initKeepAlive = () => {
-  if (port) return
+  keepAlivePort = chrome.runtime.connect({ name: 'keepAlivePort' })
 
-  port = chrome.runtime.connect({ name: 'keepAlivePort' })
-
-  port.onDisconnect.addListener(() => {
-    port = null
-
-    setTimeout(initKeepAlive, 1000)
+  keepAlivePort.onDisconnect.addListener(() => {
+    keepAlivePort = null
+    if (pingInterval) {
+      clearInterval(pingInterval)
+      pingInterval = null
+    }
+    reconnectTimeout = setTimeout(() => {
+      setupKeepAlive()
+    }, 1000)
   })
 
-  setInterval(() => {
-    if (port) {
-      port.postMessage({ type: 'ping' })
+  pingInterval = setInterval(() => {
+    if (keepAlivePort) {
+      keepAlivePort.postMessage({ type: 'ping' })
     }
   }, 25000)
 }
 
-initializeApp()
-initKeepAlive()
+const setupApp = (): void => {
+  const { shadow, mount, host } = setupShadowDOM(tailwind)
+
+  document.body.appendChild(host)
+  setupMessageListener()
+
+  const root = createRoot(mount)
+  root.render(
+    <StrictMode>
+      <ContentApp shadowRoot={shadow} />
+    </StrictMode>,
+  )
+}
+
+const cleanup = (): void => {
+  if (pingInterval) {
+    clearInterval(pingInterval)
+    pingInterval = null
+  }
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout)
+    reconnectTimeout = null
+  }
+  if (keepAlivePort) {
+    keepAlivePort.disconnect()
+    keepAlivePort = null
+  }
+}
+
+const initializeApp = async (): Promise<void> => {
+  try {
+    await waitForDocumentReady()
+    setupApp()
+    setupKeepAlive()
+  } catch (error) {
+    console.error('Failed to initialize app:', error)
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  cleanup()
+})
+
+void initializeApp()

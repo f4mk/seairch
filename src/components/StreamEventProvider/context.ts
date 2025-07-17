@@ -1,13 +1,5 @@
 import React from 'react'
 
-type StreamChunkCallback = (chunk: string) => void
+import { SubscribeFunction } from './types'
 
-type StreamCallbacks = {
-  onChunk: StreamChunkCallback
-}
-
-export type SubscribersMap = Map<string, StreamCallbacks>
-
-export const StreamEventsContext = React.createContext<
-  ((dialogId: string, callbacks: StreamCallbacks) => () => void) | null
->(null)
+export const StreamEventsContext = React.createContext<SubscribeFunction | null>(null)

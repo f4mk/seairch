@@ -15,7 +15,7 @@ export const useStreamingContext = (): StreamingContextType => {
   return context
 }
 
-export const useVisualSettings = () => {
+export const useLoadVisualSettings = () => {
   const [dimensions, setDimensions] = useState<UpdateDimensions>({
     width: WIDTH_DEFAULT,
     height: HEIGHT_DEFAULT,
@@ -53,4 +53,26 @@ export const useVisualSettings = () => {
   }, [])
 
   return { dimensions, updateDimensions }
+}
+
+export const useCollapse = (updateDimensions: (dimensions: UpdateDimensions) => void) => {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const onCollapse = useCallback(
+    (modalRef: HTMLDivElement | null) => {
+      if (!isCollapsed && modalRef) {
+        updateDimensions({
+          width: modalRef.clientWidth,
+          height: modalRef.clientHeight,
+        })
+      }
+      setIsCollapsed((prev) => !prev)
+    },
+    [isCollapsed, updateDimensions],
+  )
+
+  return {
+    isCollapsed,
+    onCollapse,
+  }
 }
