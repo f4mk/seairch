@@ -50,11 +50,6 @@ export type ContentMessage =
       }
     }
 
-export type BackgroundResponse = {
-  success: boolean
-  data?: unknown
-  error?: string
-}
 export type InitConfig = {
   apiKey: string
   baseUrl: string

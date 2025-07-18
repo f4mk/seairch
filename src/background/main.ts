@@ -1,12 +1,7 @@
 import { MSG_AI_STREAM_CHUNK } from '@/consts/messages'
 
-import { HistoryClient } from './clients/historyClient'
-import { createOpenAIClient } from './clients/openaiClient'
-import { OpenAIConfig } from './clients/openaiClient/types'
-import { HistoryService } from './services/historyService'
-import { HistoryServiceExternalParams } from './services/historyService/types'
-import { MessageService } from './services/messageService'
 import type { ContentMessage } from './types'
+import { createMessageService } from './utils'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -27,14 +22,7 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 })
 
-const messageService = new MessageService({
-  createHistoryService: (params: HistoryServiceExternalParams) =>
-    HistoryService.create({
-      ...params,
-      historyClient: HistoryClient.create({ maxHistoryMessages: params.maxHistoryMessages }),
-    }),
-  createOpenAIClient: (config: OpenAIConfig) => createOpenAIClient(config),
-})
+const messageService = createMessageService()
 
 chrome.runtime.onMessage.addListener((message: ContentMessage, sender, sendResponse) => {
   const createChannel = (dialogId: string) => (chunk: string) => {

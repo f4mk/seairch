@@ -38,19 +38,8 @@ export class HistoryService {
   }
 
   /**
-   * Get the history for a dialog
+   * Get the history for a dialog (excluding system message)
    */
-  private async getHistory(dialogId: string): Promise<HistoryItem | undefined>
-  private async getHistory(dialogId: string, defaultHistory: HistoryItem): Promise<HistoryItem>
-  private async getHistory(
-    dialogId: string,
-    defaultHistory?: HistoryItem,
-  ): Promise<HistoryItem | undefined> {
-    const history = await this.historyClient.getHistory(dialogId)
-
-    return history || defaultHistory
-  }
-
   async getUserHistory(dialogId: string): Promise<HistoryItem> {
     const history = await this.getHistory(dialogId)
     if (!history) {
@@ -61,25 +50,6 @@ export class HistoryService {
       messages: history.messages.slice(1),
       dialog: history.dialog,
     }
-  }
-
-  /**
-   * Add a message to the history
-   */
-  private async addMessage(dialogId: string, message: AIMessage): Promise<void> {
-    const content = message.content
-    const label = content.length < 30 ? content : `${content.slice(0, 28)}...`
-    const defaultHistory = {
-      dialog: {
-        id: dialogId,
-        label,
-      },
-      messages: [{ role: 'system', content: this.systemPrompt } as AIMessage],
-    }
-    const history = await this.getHistory(dialogId, defaultHistory)
-
-    history.messages.push(message)
-    await this.historyClient.updateHistory(history)
   }
 
   /**
@@ -96,29 +66,8 @@ export class HistoryService {
     if (!history) {
       throw new Error(`History not found for dialog ${dialogId}`)
     }
-    const stream = await this.openaiClient.chat.completions.create({
-      model: this.defaultModel,
-      messages: history.messages,
-      stream: true,
-      max_tokens: this.maxTokens,
-      temperature: this.temperature,
-    })
 
-    let content = ''
-    let index = 0
-    for await (const part of stream) {
-      const chunk = part.choices[0]?.delta?.content
-      if (chunk) {
-        content += chunk
-        onChunk?.(JSON.stringify({ role: 'assistant', content: chunk, index } as ChunkMessage))
-        index += 1
-      }
-    }
-
-    onChunk?.(
-      JSON.stringify({ role: 'assistant', content: '', index, isDone: true } as ChunkMessage),
-    )
-
+    const content = await this.streamResponse(history.messages, onChunk)
     await this.addMessage(dialogId, { role: 'assistant', content })
 
     const updatedHistory = await this.getHistory(dialogId)
@@ -130,6 +79,45 @@ export class HistoryService {
       messages: updatedHistory.messages.slice(1),
       dialog: updatedHistory.dialog,
     }
+  }
+
+  /**
+   * Stream the AI response and collect the complete content
+   */
+  private async streamResponse(
+    messages: AIMessage[],
+    onChunk?: (chunk: string) => void,
+  ): Promise<string> {
+    const stream = await this.openaiClient.chat.completions.create({
+      model: this.defaultModel,
+      messages,
+      stream: true,
+      max_tokens: this.maxTokens,
+      temperature: this.temperature,
+    })
+
+    let content = ''
+    let index = 0
+
+    for await (const part of stream) {
+      const chunk = part.choices[0]?.delta?.content
+      if (chunk) {
+        content += chunk
+        onChunk?.(JSON.stringify(this.createChunkMessage(chunk, index)))
+        index += 1
+      }
+    }
+
+    onChunk?.(JSON.stringify(this.createChunkMessage('', index, true)))
+
+    return content
+  }
+
+  /**
+   * Create a chunk message for streaming
+   */
+  private createChunkMessage(content: string, index: number, isDone = false): ChunkMessage {
+    return { role: 'assistant', content, index, isDone }
   }
 
   /**
@@ -151,5 +139,49 @@ export class HistoryService {
    */
   async deleteDialog(dialogId: string): Promise<void> {
     await this.historyClient.clearHistory(dialogId)
+  }
+
+  // --- Private Helpers ---
+
+  private async getHistory(dialogId: string): Promise<HistoryItem | undefined>
+  private async getHistory(dialogId: string, defaultHistory: HistoryItem): Promise<HistoryItem>
+  private async getHistory(
+    dialogId: string,
+    defaultHistory?: HistoryItem,
+  ): Promise<HistoryItem | undefined> {
+    const history = await this.historyClient.getHistory(dialogId)
+    return history || defaultHistory
+  }
+
+  /**
+   * Add a message to the history
+   */
+  private async addMessage(dialogId: string, message: AIMessage): Promise<void> {
+    const label = this.makeLabel(message.content)
+    const defaultHistory = {
+      dialog: {
+        id: dialogId,
+        label,
+      },
+      messages: [this.createSystemMessage()],
+    }
+    const history = await this.getHistory(dialogId, defaultHistory)
+
+    history.messages.push(message)
+    await this.historyClient.updateHistory(history)
+  }
+
+  /**
+   * Create a label for a message content (truncated if too long)
+   */
+  private makeLabel(content: string): string {
+    return content.length < 30 ? content : `${content.slice(0, 28)}...`
+  }
+
+  /**
+   * Create a system message with the configured system prompt
+   */
+  private createSystemMessage(): AIMessage {
+    return { role: 'system', content: this.systemPrompt }
   }
 }

@@ -11,9 +11,11 @@ import {
 import { ChunkMessage } from '@/lib/messaging/types'
 
 import { OpenAIConfig } from '../../clients/openaiClient/types'
-import type { BackgroundResponse, ContentMessage, InitConfig } from '../../types'
+import type { ContentMessage, InitConfig } from '../../types'
 import { HistoryService } from '../historyService'
 import { HistoryServiceExternalParams } from '../historyService/types'
+import type { BackgroundResponse } from './types'
+import { errorResponse, successResponse } from './utils'
 
 export class MessageService {
   private historyService: HistoryService | null = null
@@ -37,14 +39,20 @@ export class MessageService {
   ): Promise<BackgroundResponse> {
     const { type, payload } = message
 
+    if (type === MSG_INITIALIZE_AI) {
+      return this.handleInitializeAI(payload)
+    }
+
+    if (type === MSG_RESET_AI) {
+      return this.handleResetAI()
+    }
+
+    if (!this.historyService) {
+      return errorResponse('AI service not initialized. Please provide API configuration first.')
+    }
+
     try {
       switch (type) {
-        case MSG_INITIALIZE_AI:
-          return this.handleInitializeAI(payload)
-
-        case MSG_RESET_AI:
-          return this.handleResetAI()
-
         case MSG_FETCH_AI_MESSAGE:
           return this.handleFetchAIMessage(payload)
 
@@ -58,35 +66,18 @@ export class MessageService {
           return this.handleDeleteDialog(payload)
 
         default:
-          return {
-            success: false,
-            error: `Unknown message type: ${type}`,
-          }
+          return errorResponse(`Unknown message type: ${type}`)
       }
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }
+      return errorResponse('Unknown error', error)
     }
   }
 
   private async handleInitializeAI(payload: InitConfig): Promise<BackgroundResponse> {
-    const {
-      apiKey,
-      baseUrl,
-      defaultModel,
-      systemPrompt,
-      maxTokens,
-      temperature,
-      maxHistoryMessages,
-    } = payload
+    const { apiKey, baseUrl, defaultModel, ...config } = payload
 
     if (!apiKey || !baseUrl || !defaultModel) {
-      return {
-        success: false,
-        error: 'API key, base URL, and default model are required',
-      }
+      return errorResponse('API key, base URL, and default model are required')
     }
 
     try {
@@ -95,21 +86,12 @@ export class MessageService {
       this.historyService = this.createHistoryService({
         client,
         defaultModel,
-        systemPrompt,
-        maxTokens,
-        temperature,
-        maxHistoryMessages,
+        ...config,
       })
 
-      return {
-        success: true,
-        data: { message: 'AI service initialized successfully' },
-      }
+      return successResponse({ message: 'AI service initialized successfully' })
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to initialize service',
-      }
+      return errorResponse('Failed to initialize service', error)
     }
   }
 
@@ -118,28 +100,15 @@ export class MessageService {
       // TODO: reset history service
       this.historyService = null
 
-      return {
-        success: true,
-        data: { message: 'AI service reset successfully' },
-      }
+      return successResponse({ message: 'AI service reset successfully' })
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to reset service',
-      }
+      return errorResponse('Failed to reset service', error)
     }
   }
   private async handleSearchAIMessageStream(
     payload: { dialogId: string; query: string },
     createChannel: (dialogId: string) => (chunk: string) => void,
   ): Promise<BackgroundResponse> {
-    if (!this.historyService) {
-      return {
-        success: false,
-        error: 'AI service not initialized. Please provide API configuration first.',
-      }
-    }
-
     try {
       const onChunk = createChannel(payload.dialogId)
 
@@ -150,99 +119,46 @@ export class MessageService {
       }
       onChunk(JSON.stringify(chunkMessage))
 
-      const result = await this.historyService.sendMessage(chunkMessage, payload.dialogId, onChunk)
+      const result = await this.historyService!.sendMessage(chunkMessage, payload.dialogId, onChunk)
 
-      return {
-        success: true,
-        data: result,
-      }
+      return successResponse(result)
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to send message',
-      }
+      return errorResponse('Failed to send message', error)
     }
   }
 
   private async handleFetchAIMessage(payload: { dialogId: string }): Promise<BackgroundResponse> {
-    if (!this.historyService) {
-      return {
-        success: false,
-        error: 'AI service not initialized. Please provide API configuration first.',
-      }
-    }
-
     try {
       if (!payload.dialogId) {
-        return {
-          success: false,
-          error: 'dialogId is required',
-        }
+        return errorResponse('dialogId is required')
       }
 
-      const history = await this.historyService.getUserHistory(payload.dialogId)
+      const history = await this.historyService!.getUserHistory(payload.dialogId)
       if (!history) {
-        return {
-          success: false,
-          error: 'History not found',
-        }
+        return errorResponse('History not found')
       }
 
-      return {
-        success: true,
-        data: history,
-      }
+      return successResponse(history)
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch message',
-      }
+      return errorResponse('Failed to fetch message', error)
     }
   }
 
   private async handleGetDialogs(): Promise<BackgroundResponse> {
-    if (!this.historyService) {
-      return {
-        success: false,
-        error: 'Message service not initialized. Please initialize the service first.',
-      }
-    }
-
     try {
-      const dialogs = await this.historyService.getDialogs()
-      return {
-        success: true,
-        data: {
-          dialogs,
-        },
-      }
+      const dialogs = await this.historyService!.getDialogs()
+      return successResponse({ dialogs })
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get dialogs',
-      }
+      return errorResponse('Failed to get dialogs', error)
     }
   }
 
   private async handleDeleteDialog(payload: { dialogId: string }): Promise<BackgroundResponse> {
-    if (!this.historyService) {
-      return {
-        success: false,
-        error: 'Message service not initialized. Please initialize the service first.',
-      }
-    }
-
     try {
-      await this.historyService.deleteDialog(payload.dialogId)
-      return {
-        success: true,
-        data: { message: 'Dialog deleted successfully' },
-      }
+      await this.historyService!.deleteDialog(payload.dialogId)
+      return successResponse({ message: 'Dialog deleted successfully' })
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete dialog',
-      }
+      return errorResponse('Failed to delete dialog', error)
     }
   }
 }
