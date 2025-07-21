@@ -146,7 +146,7 @@ export const SearchContent: Props = ({ initialQuery }) => {
         onSearch={handleSearch}
         isLoading={isLoading || isStreaming}
       />
-      <div className='w-[50%]'>
+      <div className='w-[50%] max-w-60'>
         <Combobox
           options={dialogOptions}
           onChange={handleDialogChange}
