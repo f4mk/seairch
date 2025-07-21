@@ -80,27 +80,3 @@ export const loadAndInitConfig = async (configName: string) => {
   }
   throw new Error('Cannot load AI configuration')
 }
-
-export const customFetch = async (
-  input: string | URL | Request,
-  init?: RequestInit,
-): Promise<Response> => {
-  const cleanHeaders = new Headers()
-
-  if (init?.headers) {
-    const originalHeaders = new Headers(init.headers)
-    for (const [key, value] of originalHeaders.entries()) {
-      // NOTE: Some weird behavior by perplexity
-      if (!key.toLowerCase().startsWith('x-stainless-')) {
-        cleanHeaders.set(key, value)
-      }
-    }
-  }
-
-  const cleanInit: RequestInit = {
-    ...init,
-    headers: cleanHeaders,
-  }
-
-  return fetch(input, cleanInit)
-}

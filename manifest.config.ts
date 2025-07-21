@@ -7,6 +7,7 @@ export default defineManifest({
   name: pkg.name,
   version: pkg.version,
   permissions: ['storage', 'activeTab', 'tabs'],
+  host_permissions: ['https://*/*'],
   icons: {
     48: 'public/logo.png',
   },
