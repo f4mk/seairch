@@ -8,7 +8,7 @@ import {
   MSG_RESET_AI,
   MSG_SEARCH_AI_MESSAGE_STREAM,
 } from '@/consts/messages'
-import { ChunkMessage, StreamingMessageContent } from '@/lib/messaging/types'
+import { ChunkMessage } from '@/lib/messaging/types'
 
 import { OpenAIConfig } from '../../clients/openaiClient/types'
 import type { ContentMessage, InitConfig } from '../../types'
@@ -125,20 +125,6 @@ export class MessageService {
     }
   }
 
-  private extractUserText(query: string): string {
-    let result = query
-    try {
-      const parsed: StreamingMessageContent = JSON.parse(query)
-      if (Array.isArray(parsed)) {
-        const textItem = parsed.find((item) => item.type === 'text')
-        result = textItem ? textItem.text : query
-      }
-    } catch {
-      // Not JSON, return as-is
-    }
-    return result
-  }
-
   private async handleSearchAIMessageStream(
     payload: { dialogId: string; query: string },
     createChannel: (dialogId: string) => (chunk: string) => void,
@@ -155,8 +141,7 @@ export class MessageService {
 
       const existingHistory = await this.historyService!.getHistory(payload.dialogId)
       if (!existingHistory) {
-        const userText = this.extractUserText(payload.query)
-        await this.historyService!.createInitialDialog(payload.dialogId, userText)
+        await this.historyService!.createInitialDialog(payload.dialogId, payload.query)
         const systemMessage = {
           role: 'system' as const,
           content: this.systemPrompt!,
