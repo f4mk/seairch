@@ -8,7 +8,7 @@ import {
   MSG_RESET_AI,
   MSG_SEARCH_AI_MESSAGE_STREAM,
 } from '@/consts/messages'
-import { ChunkMessage } from '@/lib/messaging/types'
+import { ChunkMessage, StreamingMessageContent } from '@/lib/messaging/types'
 
 import { OpenAIConfig } from '../../clients/openaiClient/types'
 import type { ContentMessage, InitConfig } from '../../types'
@@ -19,6 +19,11 @@ import { errorResponse, successResponse } from './utils'
 
 export class MessageService {
   private historyService: HistoryService | null = null
+  private openaiClient: OpenAI | null = null
+  private defaultModel: string | null = null
+  private systemPrompt: string | null = null
+  private maxTokens: number | null = null
+  private temperature: number | null = null
   private createHistoryService: (config: HistoryServiceExternalParams) => HistoryService
   private createOpenAIClient: (config: OpenAIConfig) => OpenAI
 
@@ -47,7 +52,7 @@ export class MessageService {
       return this.handleResetAI()
     }
 
-    if (!this.historyService) {
+    if (!this.historyService || !this.openaiClient) {
       return errorResponse('AI service not initialized. Please provide API configuration first.')
     }
 
@@ -74,19 +79,29 @@ export class MessageService {
   }
 
   private async handleInitializeAI(payload: InitConfig): Promise<BackgroundResponse> {
-    const { apiKey, baseUrl, defaultModel, ...config } = payload
+    const {
+      apiKey,
+      baseUrl,
+      defaultModel,
+      systemPrompt,
+      maxTokens,
+      temperature,
+      maxHistoryMessages,
+    } = payload
 
-    if (!apiKey || !baseUrl || !defaultModel) {
-      return errorResponse('API key, base URL, and default model are required')
+    if (!apiKey || !baseUrl || !defaultModel || !systemPrompt || !maxTokens || !temperature) {
+      return errorResponse('Some initialization parameters are missing')
     }
 
     try {
-      const client = this.createOpenAIClient({ apiKey, baseUrl })
+      this.openaiClient = this.createOpenAIClient({ apiKey, baseUrl })
+      this.defaultModel = defaultModel
+      this.systemPrompt = systemPrompt
+      this.maxTokens = maxTokens
+      this.temperature = temperature
 
       this.historyService = this.createHistoryService({
-        client,
-        defaultModel,
-        ...config,
+        maxHistoryMessages,
       })
 
       return successResponse({ message: 'AI service initialized successfully' })
@@ -97,14 +112,33 @@ export class MessageService {
 
   private async handleResetAI(): Promise<BackgroundResponse> {
     try {
-      // TODO: reset history service
       this.historyService = null
+      this.openaiClient = null
+      this.defaultModel = null
+      this.systemPrompt = null
+      this.maxTokens = null
+      this.temperature = null
 
       return successResponse({ message: 'AI service reset successfully' })
     } catch (error) {
       return errorResponse('Failed to reset service', error)
     }
   }
+
+  private extractUserText(query: string): string {
+    let result = query
+    try {
+      const parsed: StreamingMessageContent = JSON.parse(query)
+      if (Array.isArray(parsed)) {
+        const textItem = parsed.find((item) => item.type === 'text')
+        result = textItem ? textItem.text : query
+      }
+    } catch {
+      // Not JSON, return as-is
+    }
+    return result
+  }
+
   private async handleSearchAIMessageStream(
     payload: { dialogId: string; query: string },
     createChannel: (dialogId: string) => (chunk: string) => void,
@@ -112,19 +146,86 @@ export class MessageService {
     try {
       const onChunk = createChannel(payload.dialogId)
 
-      const chunkMessage: ChunkMessage = {
-        role: 'user',
+      const userMessage = {
+        role: 'user' as const,
         content: payload.query,
         index: 0,
       }
-      onChunk(JSON.stringify(chunkMessage))
+      onChunk(JSON.stringify(userMessage))
 
-      const result = await this.historyService!.sendMessage(chunkMessage, payload.dialogId, onChunk)
+      const existingHistory = await this.historyService!.getHistory(payload.dialogId)
+      if (!existingHistory) {
+        const userText = this.extractUserText(payload.query)
+        await this.historyService!.createInitialDialog(payload.dialogId, userText)
+        const systemMessage = {
+          role: 'system' as const,
+          content: this.systemPrompt!,
+        }
+        await this.historyService!.addMessage(payload.dialogId, systemMessage)
+      }
 
-      return successResponse(result)
+      await this.historyService!.addMessage(payload.dialogId, userMessage)
+
+      const history = await this.historyService!.getHistory(payload.dialogId)
+      if (!history) {
+        return errorResponse('History not found')
+      }
+
+      const content = await this.streamResponse(history.messages, onChunk)
+
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content,
+      }
+      await this.historyService!.addMessage(payload.dialogId, assistantMessage)
+
+      const updatedHistory = await this.historyService!.getHistory(payload.dialogId)
+      if (!updatedHistory) {
+        return errorResponse('History not found')
+      }
+
+      return successResponse({
+        // NOTE: Exclude system message
+        messages: updatedHistory.messages.slice(1),
+        dialog: updatedHistory.dialog,
+      })
     } catch (error) {
       return errorResponse('Failed to send message', error)
     }
+  }
+
+  private async streamResponse(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    onChunk?: (chunk: string) => void,
+  ): Promise<string> {
+    const stream = await this.openaiClient!.chat.completions.create({
+      model: this.defaultModel!,
+      messages,
+      stream: true,
+      max_tokens: this.maxTokens!,
+      temperature: this.temperature,
+    })
+
+    let content = ''
+    // NOTE: assuming that the first message was a user message
+    let index = 1
+
+    for await (const part of stream) {
+      const chunk = part.choices[0]?.delta?.content
+      if (chunk) {
+        content += chunk
+        onChunk?.(JSON.stringify(this.createChunkMessage(chunk, index)))
+        index += 1
+      }
+    }
+
+    onChunk?.(JSON.stringify(this.createChunkMessage('', index, true)))
+
+    return content
+  }
+
+  private createChunkMessage(content: string, index: number, isDone = false): ChunkMessage {
+    return { role: 'assistant', content, index, isDone }
   }
 
   private async handleFetchAIMessage(payload: { dialogId: string }): Promise<BackgroundResponse> {
@@ -137,7 +238,8 @@ export class MessageService {
       if (!history) {
         return errorResponse('History not found')
       }
-
+      // NOTE: Exclude system message
+      history.messages = history.messages.slice(1)
       return successResponse(history)
     } catch (error) {
       return errorResponse('Failed to fetch message', error)

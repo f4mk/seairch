@@ -59,10 +59,22 @@ export const SearchHeader: Props = ({
         )}
       </CardTitle>
       <CardAction>
-        <Button variant='ghost' size='sm' aria-label='Collapse search' onClick={onCollapse}>
+        <Button
+          variant='ghost'
+          size='sm'
+          aria-label='Collapse search'
+          onClick={onCollapse}
+          className='cursor-pointer'
+        >
           {isCollapsed ? <ArrowUpRight size={24} /> : <ArrowDownLeft size={24} />}
         </Button>
-        <Button variant='ghost' size='sm' aria-label='Close search' onClick={onClose}>
+        <Button
+          variant='ghost'
+          size='sm'
+          aria-label='Close search'
+          onClick={onClose}
+          className='cursor-pointer'
+        >
           <X size={24} />
         </Button>
       </CardAction>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { KEY_ENTER } from '@/consts/keyboard'
 import { useAllowEvents } from '@/hooks/useAllowEvents'
+import { cn } from '@/lib/utils'
 
 import { Props } from './types'
 
@@ -17,6 +18,7 @@ export const SearchControl: Props = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const allowEvent = useAllowEvents()
+  const isDisabled = !searchQuery.trim() || isLoading
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -46,8 +48,11 @@ export const SearchControl: Props = ({
       />
       <Button
         onClick={onSearch}
-        className='flex h-10 w-10 justify-center self-end p-0'
-        disabled={!searchQuery.trim() || isLoading}
+        className={cn(
+          'flex h-10 w-10 justify-center self-end p-0',
+          !isDisabled && 'cursor-pointer',
+        )}
+        disabled={isDisabled}
         variant='secondary'
         tabIndex={0}
         aria-label='Send query'
