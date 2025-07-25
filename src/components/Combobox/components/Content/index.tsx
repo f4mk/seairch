@@ -32,7 +32,7 @@ export const Content: Props = ({
   }, [open])
 
   const filteredOptions = useMemo(() => {
-    if (!query) return options
+    if (!query.trim()) return options
     return options.filter((opt) => opt.label.toLowerCase().includes(query.toLowerCase()))
   }, [options, query])
 
@@ -54,7 +54,7 @@ export const Content: Props = ({
       className='popover-content'
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <Command>
+      <Command shouldFilter={false}>
         <CommandInput
           placeholder={searchPlaceholder}
           value={query}
