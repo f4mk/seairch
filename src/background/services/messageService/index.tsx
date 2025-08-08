@@ -15,15 +15,15 @@ import type { ContentMessage, InitConfig } from '../../types'
 import { HistoryService } from '../historyService'
 import { HistoryServiceExternalParams } from '../historyService/types'
 import type { BackgroundResponse } from './types'
-import { errorResponse, successResponse } from './utils'
+import { errorResponse, isAdditionalParamsAllowed, successResponse } from './utils'
 
 export class MessageService {
   private historyService: HistoryService | null = null
   private openaiClient: OpenAI | null = null
-  private defaultModel: string | null = null
-  private systemPrompt: string | null = null
-  private maxTokens: number | null = null
-  private temperature: number | null = null
+  private defaultModel: string | undefined = undefined
+  private systemPrompt: string | undefined = undefined
+  private maxTokens: number | undefined = undefined
+  private temperature: number | undefined = undefined
   private createHistoryService: (config: HistoryServiceExternalParams) => HistoryService
   private createOpenAIClient: (config: OpenAIConfig) => OpenAI
 
@@ -97,8 +97,8 @@ export class MessageService {
       this.openaiClient = this.createOpenAIClient({ apiKey, baseUrl })
       this.defaultModel = defaultModel
       this.systemPrompt = systemPrompt
-      this.maxTokens = maxTokens
-      this.temperature = temperature
+      this.maxTokens = isAdditionalParamsAllowed(defaultModel) ? maxTokens : undefined
+      this.temperature = isAdditionalParamsAllowed(defaultModel) ? temperature : undefined
 
       this.historyService = this.createHistoryService({
         maxHistoryMessages,
@@ -114,10 +114,10 @@ export class MessageService {
     try {
       this.historyService = null
       this.openaiClient = null
-      this.defaultModel = null
-      this.systemPrompt = null
-      this.maxTokens = null
-      this.temperature = null
+      this.defaultModel = undefined
+      this.systemPrompt = undefined
+      this.maxTokens = undefined
+      this.temperature = undefined
 
       return successResponse({ message: 'AI service reset successfully' })
     } catch (error) {
@@ -187,7 +187,7 @@ export class MessageService {
       model: this.defaultModel!,
       messages,
       stream: true,
-      max_tokens: this.maxTokens!,
+      max_tokens: this.maxTokens,
       temperature: this.temperature,
     })
 

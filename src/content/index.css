@@ -258,4 +258,12 @@
     background: var(--foreground);
     color: var(--muted);
   }
+
+  /* Ensure text is selectable inside the extension UI */
+  .search-modal,
+  .search-modal * {
+    -webkit-user-select: text;
+    user-select: text;
+    cursor: auto;
+  }
 }
